@@ -22,3 +22,6 @@ next-env.d.ts
 # sistema
 .DS_Store
 Thumbs.db
+
+# relatorios de importacao contem nomes de alunos
+/relatorios

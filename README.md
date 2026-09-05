@@ -44,6 +44,40 @@ de novo e' seguro: o que ja foi aplicado e' ignorado.
 Para uma alteracao de schema, crie `002_descricao.sql` — nunca edite uma
 migration ja aplicada.
 
+## Importacao das planilhas
+
+```bash
+npm run importar -- estudantes  "estudantes.xlsx"
+npm run importar -- notas       "Notas - 6ºA.csv"    --periodo=2026
+npm run importar -- ocorrencias "Ocorrencias 6A.csv"
+npm run importar -- frequencia  "frequencia.csv"     --periodo=2026
+npm run importar -- familias
+```
+
+Notas e ocorrencias sao um arquivo por turma; a turma sai do nome do arquivo,
+porque nenhum dos dois CSVs traz essa coluna. Importar `estudantes` ja
+regenera as familias no fim.
+
+Cada comando roda dentro de uma transacao: ou a planilha inteira entra, ou
+nada entra. Rodar o mesmo arquivo duas vezes nao duplica nada.
+
+**Ordem obrigatoria:** `estudantes` primeiro. Notas, ocorrencias e frequencia
+so' conseguem casar com alunos que ja existem no banco.
+
+### Casamento de dados
+
+Os arquivos da escola nao compartilham um identificador confiavel, entao a
+busca do estudante tenta, nesta ordem:
+
+1. matricula exata
+2. matricula sem zeros a esquerda
+3. nome normalizado (maiusculo, sem acento), restrito a turma quando ela e'
+   conhecida
+
+Se nada casar, ou se houver mais de um candidato, a linha vira **pendencia**:
+nunca e' feito um chute. Ao final o comando imprime quantas foram e grava o
+detalhe em `relatorios/`, que fica fora do git por conter nomes de alunos.
+
 ## Modelo de dados
 
 | tabela | conteudo |
@@ -56,6 +90,8 @@ migration ja aplicada.
 | `ocorrencias` | tipo, descricao e data |
 | `frequencia` | totais de aulas e faltas por periodo |
 | `avisos` | destino exclusivo: turma **ou** estudante, garantido por CHECK |
+| `familias` | agrupamento de irmaos por filiacao; sem CPF e sem senha |
+| `estudante_familia` | vinculo estudante -> familia (um por estudante) |
 
 ## Dados reais
 
@@ -72,4 +108,5 @@ o repositorio** — o `.gitignore` bloqueia `*.xlsx`, `*.xls` e `*.csv`.
 ## Etapas
 
 - [x] **1** — modelagem de dados e setup inicial
+- [x] **2** — importacao das planilhas
 - [ ] 2 a 6 — a definir pelo Robson, uma de cada vez

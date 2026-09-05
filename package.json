@@ -9,14 +9,17 @@
     "lint": "eslint",
     "db:up": "docker compose up -d",
     "db:down": "docker compose down",
-    "migrate": "tsx scripts/migrate.ts"
+    "migrate": "tsx scripts/migrate.ts",
+    "importar": "tsx scripts/importar.ts"
   },
   "dependencies": {
+    "csv-parse": "^7.0.2",
     "dotenv": "^16.4.7",
     "next": "16.3.4",
     "pg": "^8.13.1",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "read-excel-file": "^9.3.10",
     "tsx": "^4.23.1"
   },
   "devDependencies": {
