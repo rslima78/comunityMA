@@ -1,0 +1,18 @@
+# Postgres local para desenvolvimento. Em producao o banco e' o do Railway.
+# Porta 5433 no host para nao conflitar com um Postgres ja instalado.
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: communityma-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: communityma
+      POSTGRES_PASSWORD: communityma
+      POSTGRES_DB: communityma
+    ports:
+      - "5433:5432"
+    volumes:
+      - communityma-pgdata:/var/lib/postgresql/data
+
+volumes:
+  communityma-pgdata:

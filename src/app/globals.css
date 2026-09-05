@@ -1,0 +1,38 @@
+@import "tailwindcss";
+
+/* Tokens do DESIGN.md ("EduConnect Parent"). As telas so' chegam na Etapa 5;
+   aqui ficam definidos para nao espalhar hex solto pelo codigo depois. */
+@theme {
+  --color-primary: #1a73e8;
+  --color-on-primary: #ffffff;
+  --color-primary-container: #e8f0fe;
+  --color-on-primary-container: #174ea6;
+
+  --color-success: #1e8e3e;
+  --color-success-container: #e6f4ea;
+  --color-on-success-container: #137333;
+
+  --color-warning: #e8710a;
+  --color-warning-container: #fef7e0;
+  --color-on-warning-container: #b06000;
+
+  --color-danger: #d93025;
+  --color-danger-container: #fce8e6;
+  --color-on-danger-container: #a50e0e;
+
+  --color-surface: #ffffff;
+  --color-canvas: #f8f9fa;
+  --color-surface-high: #f1f3f4;
+  --color-outline: #e0e2e6;
+  --color-text: #202124;
+  --color-text-muted: #5f6368;
+
+  --radius-card: 1rem;
+  --radius-control: 0.75rem;
+}
+
+body {
+  background: var(--color-canvas);
+  color: var(--color-text);
+  font-family: "Roboto Flex", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
