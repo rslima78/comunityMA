@@ -10,6 +10,8 @@ import {
 } from "./actions";
 
 const DESCRICOES: Record<TipoDeImportacao, string> = {
+  estudantes:
+    "Planilha .xlsx do cadastro geral. Cria os alunos novos, atualiza os existentes e gera as senhas iniciais (data de nascimento) de quem ainda não tem. Nunca mexe na senha de quem já trocou.",
   notas:
     "Um arquivo por turma. A turma sai do nome do arquivo (ex: \"Notas - 6ºA.csv\"), então não renomeie.",
   ocorrencias:
@@ -35,6 +37,7 @@ export function FormularioImportacao({ anoPadrao }: { anoPadrao: string }) {
           value={tipo}
           onChange={(e) => setTipo(e.target.value as TipoDeImportacao)}
         >
+          <option value="estudantes">Cadastro de estudantes</option>
           <option value="notas">Notas</option>
           <option value="ocorrencias">Ocorrências</option>
           <option value="frequencia">Frequência</option>
@@ -55,20 +58,20 @@ export function FormularioImportacao({ anoPadrao }: { anoPadrao: string }) {
 
         <label className="block">
           <span className="text-sm font-medium text-[var(--color-text-muted)]">
-            Arquivos (.csv)
+            {tipo === "estudantes" ? "Arquivo (.xlsx)" : "Arquivos (.csv)"}
           </span>
           <input
             type="file"
             name="arquivos"
-            accept=".csv,text/csv"
-            multiple={tipo !== "frequencia"}
+            accept={tipo === "estudantes" ? ".xlsx" : ".csv,text/csv"}
+            multiple={tipo === "notas" || tipo === "ocorrencias"}
             required
             className="mt-1 block w-full rounded-xl border border-[var(--color-outline)] bg-[var(--color-canvas)] p-3 text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-[var(--color-primary-container)] file:px-3 file:py-2 file:text-sm file:font-medium file:text-[var(--color-on-primary-container)]"
           />
           <span className="mt-1 block text-xs text-[var(--color-text-muted)]">
-            {tipo === "frequencia"
-              ? "Um arquivo, até 8 MB."
-              : "Pode escolher várias turmas de uma vez. Até 8 MB por arquivo."}
+            {tipo === "notas" || tipo === "ocorrencias"
+              ? "Pode escolher várias turmas de uma vez. Até 8 MB por arquivo."
+              : "Um arquivo, até 8 MB."}
           </span>
         </label>
 

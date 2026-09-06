@@ -3,6 +3,10 @@
  *
  *   ADMIN_USER=coordenacao ADMIN_PASSWORD=... npm run seed-admin
  *
+ * Com --opcional, a ausencia das variaveis nao e' erro: o comando avisa e sai
+ * bem. E' assim que ele roda no boot do Railway, onde nao pode derrubar a
+ * aplicacao so' porque ninguem configurou um admin ainda.
+ *
  * Nao existe tela publica de cadastro de admin de proposito: a unica forma de
  * criar um e' com acesso ao ambiente do servidor. Rodar de novo com a mesma
  * senha nao muda nada; com senha diferente, troca a senha do usuario.
@@ -13,10 +17,17 @@ import { gerarHash } from "../src/lib/senha";
 const MINIMO_SENHA = 10;
 
 async function main() {
+  const opcional = process.argv.includes("--opcional");
   const usuario = process.env.ADMIN_USER?.trim().toLowerCase();
   const senha = process.env.ADMIN_PASSWORD;
 
   if (!usuario || !senha) {
+    if (opcional) {
+      console.log(
+        "\n  ADMIN_USER/ADMIN_PASSWORD nao definidos -- nenhum admin criado.\n"
+      );
+      return;
+    }
     console.error(
       "\n  defina ADMIN_USER e ADMIN_PASSWORD antes de rodar.\n" +
         "  em desenvolvimento, no .env.local; no Railway, em Variables.\n"
@@ -25,9 +36,13 @@ async function main() {
   }
 
   if (senha.length < MINIMO_SENHA) {
-    console.error(
-      `\n  ADMIN_PASSWORD precisa ter pelo menos ${MINIMO_SENHA} caracteres.\n`
-    );
+    const recado = `\n  ADMIN_PASSWORD precisa ter pelo menos ${MINIMO_SENHA} caracteres.\n`;
+    if (opcional) {
+      // No boot do Railway, senha curta nao pode impedir a aplicacao de subir.
+      console.error(`${recado}  Nenhum admin criado.\n`);
+      return;
+    }
+    console.error(recado);
     process.exit(1);
   }
 

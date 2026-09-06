@@ -113,8 +113,7 @@ npm run importar -- senhas
 
 ### Administrador — `/admin/login`
 
-Nao existe cadastro publico de admin. O usuario inicial vem de variavel de
-ambiente:
+Nao existe cadastro publico de admin. O usuario vem de variavel de ambiente:
 
 ```bash
 npm run seed-admin
@@ -122,6 +121,15 @@ npm run seed-admin
 
 Le `ADMIN_USER` e `ADMIN_PASSWORD`. Rodar de novo com senha diferente troca a
 senha do usuario.
+
+**No Railway isso roda sozinho a cada deploy** (ver `railway.json`), com
+`--opcional`: sem as variaveis definidas, o comando avisa e sai bem, sem
+impedir a aplicacao de subir. Ou seja, para criar ou trocar a senha do admin
+em producao, basta definir `ADMIN_USER` e `ADMIN_PASSWORD` nas Variables do
+servico e redeployar -- nao e' preciso acesso direto ao banco.
+
+Como o seed roda no boot, **as variaveis sao a fonte da verdade da senha do
+admin**: mudou a variavel, mudou a senha no proximo deploy.
 
 ### Tela do responsavel — `/portal`
 
@@ -157,6 +165,9 @@ inicio de `src/lib/portal.ts`.
 Para quando chegam planilhas atualizadas (nova unidade, novo bimestre), sem
 precisar de terminal:
 
+- **cadastro de estudantes** (.xlsx) cria os alunos novos, atualiza os
+  existentes e gera as senhas iniciais de quem ainda nao tem -- sem tocar na
+  senha de quem ja trocou
 - **notas** e **ocorrencias** aceitam varias turmas de uma vez; a turma sai do
   nome do arquivo, entao os arquivos nao podem ser renomeados
 - **frequencia** e' o arquivo unico da escola
@@ -165,8 +176,8 @@ precisar de terminal:
 - o resultado aparece na hora, com os contadores e a lista de linhas que nao
   entraram
 
-O cadastro de estudantes continua so' pela linha de comando, porque cria
-logins e senhas iniciais.
+Assim a escola opera tudo pelo navegador: o banco nao precisa ficar acessivel
+de fora, e ninguem precisa de terminal.
 
 ### Painel de avisos — `/admin`
 
@@ -219,7 +230,8 @@ o repositorio** — o `.gitignore` bloqueia `*.xlsx`, `*.xls` e `*.csv`.
    - `SESSION_SECRET` = 64 caracteres aleatorios
    - `ADMIN_USER` e `ADMIN_PASSWORD`
 3. As migrations rodam sozinhas a cada deploy (ver `railway.json`).
-4. Rode `npm run seed-admin` uma vez para criar o administrador.
+4. O administrador e as migrations sao aplicados automaticamente no boot.
+5. Importe o cadastro e as planilhas por `/admin/importar`.
 
 ## Etapas
 

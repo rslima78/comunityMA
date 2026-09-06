@@ -4,14 +4,20 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, join } from "node:path";
 import { revalidatePath } from "next/cache";
+import { importarEstudantes } from "../../../../scripts/importadores/estudantes";
 import { importarFrequencia } from "../../../../scripts/importadores/frequencia";
 import { importarNotas } from "../../../../scripts/importadores/notas";
 import { importarOcorrencias } from "../../../../scripts/importadores/ocorrencias";
+import { definirSenhasIniciais } from "../../../../scripts/importadores/senhas";
 import type { ResumoDaImportacao } from "../../../../scripts/lib/relatorio";
 import { carregarSessaoAdmin } from "@/lib/auth";
 import { BancoIndisponivel, comTransacao } from "@/lib/db";
 
-export type TipoDeImportacao = "notas" | "ocorrencias" | "frequencia";
+export type TipoDeImportacao =
+  | "estudantes"
+  | "notas"
+  | "ocorrencias"
+  | "frequencia";
 
 export interface ResultadoDoArquivo {
   arquivo: string;
@@ -27,7 +33,20 @@ export interface EstadoImportacao {
 }
 
 const TAMANHO_MAXIMO = 8 * 1024 * 1024;
-const TIPOS: TipoDeImportacao[] = ["notas", "ocorrencias", "frequencia"];
+const TIPOS: TipoDeImportacao[] = [
+  "estudantes",
+  "notas",
+  "ocorrencias",
+  "frequencia",
+];
+
+/** O cadastro vem em planilha do Excel; o resto, em CSV do SIGEDUC. */
+const EXTENSAO: Record<TipoDeImportacao, RegExp> = {
+  estudantes: /\.xlsx$/i,
+  notas: /\.csv$/i,
+  ocorrencias: /\.csv$/i,
+  frequencia: /\.csv$/i,
+};
 
 /**
  * Tira qualquer coisa de caminho do nome enviado pelo navegador.
@@ -81,9 +100,10 @@ export async function importarPlanilhas(
         erro: `"${arquivo.name}" tem mais de 8 MB. Nenhum arquivo foi importado.`,
       };
     }
-    if (!/\.csv$/i.test(arquivo.name)) {
+    if (!EXTENSAO[tipo].test(arquivo.name)) {
+      const esperado = tipo === "estudantes" ? ".xlsx" : ".csv";
       return {
-        erro: `"${arquivo.name}" nao e um .csv. Nenhum arquivo foi importado.`,
+        erro: `"${arquivo.name}" nao e um ${esperado}. Nenhum arquivo foi importado.`,
       };
     }
   }
@@ -100,17 +120,31 @@ export async function importarPlanilhas(
       await writeFile(caminho, Buffer.from(await arquivo.arrayBuffer()));
 
       try {
-        const resumo = await comTransacao(async (db) => {
+        const resumos = await comTransacao(async (db) => {
+          if (tipo === "estudantes") {
+            // O cadastro tambem gera as senhas iniciais de quem ainda nao tem;
+            // sem isso os alunos novos entrariam sem conseguir acessar.
+            const cadastro = await importarEstudantes(db, caminho);
+            const senhas = await definirSenhasIniciais(db);
+            return [cadastro.resumo(), senhas.resumo()];
+          }
+
           const relatorio =
             tipo === "notas"
               ? await importarNotas(db, caminho, periodo)
               : tipo === "ocorrencias"
                 ? await importarOcorrencias(db, caminho)
                 : await importarFrequencia(db, caminho, periodo);
-          return relatorio.resumo();
+          return [relatorio.resumo()];
         });
 
-        resultados.push({ arquivo: nome, ok: true, resumo });
+        for (const [i, resumo] of resumos.entries()) {
+          resultados.push({
+            arquivo: i === 0 ? nome : resumo.titulo,
+            ok: true,
+            resumo,
+          });
+        }
       } catch (erro) {
         console.error(`[importacao] ${nome} falhou:`, erro);
         resultados.push({
