@@ -51,12 +51,12 @@ npm run importar -- estudantes  "estudantes.xlsx"
 npm run importar -- notas       "Notas - 6ºA.csv"    --periodo=2026
 npm run importar -- ocorrencias "Ocorrencias 6A.csv"
 npm run importar -- frequencia  "frequencia.csv"     --periodo=2026
-npm run importar -- familias
+npm run importar -- senhas
 ```
 
 Notas e ocorrencias sao um arquivo por turma; a turma sai do nome do arquivo,
-porque nenhum dos dois CSVs traz essa coluna. Importar `estudantes` ja
-regenera as familias no fim.
+porque nenhum dos dois CSVs traz essa coluna. Importar `estudantes` ja define
+as senhas iniciais de quem ainda nao tem.
 
 Cada comando roda dentro de uma transacao: ou a planilha inteira entra, ou
 nada entra. Rodar o mesmo arquivo duas vezes nao duplica nada.
@@ -88,14 +88,16 @@ admin nem o contrario, porque o escopo entra na assinatura.
 - **usuario:** CPF do estudante
 - **senha inicial:** data de nascimento no formato `DDMMAAAA`
 - troca de senha **obrigatoria** no primeiro acesso, antes de qualquer tela
-- apos entrar, o portal carrega os irmaos da mesma familia -- um CPF e uma
-  senha dao acesso a todos os filhos, sem login adicional
+- **um login da acesso a exatamente um estudante.** Responsavel com mais de um
+  filho entra com o CPF de cada um, um de cada vez. Nao existe agrupamento por
+  familia: ele dependeria dos nomes de mae e pai digitados na secretaria, e um
+  homonimo ali viraria acesso ao dado do filho de outra pessoa
 - erro sempre generico ("CPF ou senha invalidos"), e o tempo de resposta e' o
   mesmo para CPF inexistente e senha errada, para nao revelar quem estuda aqui
 - 8 tentativas por CPF e IP a cada 15 minutos
 
 As senhas iniciais entram junto com o cadastro. Para gerar apenas as que
-faltam, sem tocar em quem ja' trocou a senha:
+faltam, sem tocar em quem ja trocou a senha:
 
 ```bash
 npm run importar -- senhas
@@ -133,8 +135,6 @@ mundo.
 | `ocorrencias` | tipo, descricao e data |
 | `frequencia` | totais de aulas e faltas por periodo |
 | `avisos` | destino exclusivo: turma **ou** estudante, garantido por CHECK |
-| `familias` | agrupamento de irmaos por filiacao; sem CPF e sem senha |
-| `estudante_familia` | vinculo estudante -> familia (um por estudante) |
 
 ## Dados reais
 

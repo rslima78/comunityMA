@@ -96,15 +96,3 @@ export function normalizarData(valor: unknown): Date | null {
   const data = new Date(Number(ano), Number(mes) - 1, Number(dia));
   return Number.isNaN(data.getTime()) ? null : data;
 }
-
-/**
- * Chave de agrupamento familiar: mae e pai normalizados.
- * Devolve null quando nao ha filiacao nenhuma -- sem isso, todos os
- * estudantes sem mae e sem pai cairiam na mesma "familia".
- */
-export function chaveFamilia(nomeMae: unknown, nomePai: unknown): string | null {
-  const mae = normalizarNome(nomeMae);
-  const pai = normalizarNome(nomePai);
-  if (!mae && !pai) return null;
-  return `${mae}|${pai}`;
-}

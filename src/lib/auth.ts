@@ -12,18 +12,16 @@ export type EstudanteDaSessao = {
 
 export interface SessaoResponsavel {
   estudante: EstudanteDaSessao;
-  /** O proprio estudante e os irmaos da mesma familia, em ordem alfabetica. */
-  acessiveis: EstudanteDaSessao[];
   precisaTrocarSenha: boolean;
 }
 
 /**
  * Monta a sessao do responsavel a partir do cookie.
  *
- * O conjunto de estudantes acessiveis e' recalculado no banco a cada
- * requisicao, a partir do id que veio assinado no cookie. Nunca vem do
- * cliente: assim, mudar a familia de um aluno tem efeito imediato, e nao ha'
- * lista de ids trafegando por onde alguem possa mexer.
+ * Um login da acesso a exatamente um estudante: o id vem assinado no cookie e
+ * o registro e' relido do banco a cada requisicao. Nao existe lista de
+ * estudantes acessiveis, nem irmaos -- responsavel com mais de um filho entra
+ * com o CPF de cada um, separadamente.
  */
 export async function carregarSessaoResponsavel(): Promise<SessaoResponsavel | null> {
   const estudanteId = await lerSessao("responsavel");
@@ -45,20 +43,6 @@ export async function carregarSessaoResponsavel(): Promise<SessaoResponsavel | n
   const estudante = linhas[0];
   if (!estudante) return null;
 
-  const acessiveis = await query<EstudanteDaSessao>(
-    `SELECT e.id, e.nome, e.matricula, e.serie, e.turma
-     FROM estudantes e
-     WHERE e.id = $1
-        OR e.id IN (
-          SELECT irmao.estudante_id
-          FROM estudante_familia atual
-          JOIN estudante_familia irmao ON irmao.familia_id = atual.familia_id
-          WHERE atual.estudante_id = $1
-        )
-     ORDER BY e.nome`,
-    [estudanteId]
-  );
-
   return {
     estudante: {
       id: estudante.id,
@@ -67,7 +51,6 @@ export async function carregarSessaoResponsavel(): Promise<SessaoResponsavel | n
       serie: estudante.serie,
       turma: estudante.turma,
     },
-    acessiveis,
     precisaTrocarSenha: estudante.precisa_trocar_senha,
   };
 }
@@ -107,14 +90,15 @@ export async function exigirAdmin(): Promise<SessaoAdmin> {
 }
 
 /**
- * Confere se um estudante pertence a sessao do responsavel.
+ * Ponto unico de checagem para as consultas da Etapa 5.
  *
- * Toda consulta de dado de aluno na Etapa 5 tem que passar por aqui: e' o
- * ponto unico que impede alguem de trocar o id na URL e ver outro estudante.
+ * Parece trivial hoje -- a sessao tem um estudante so' --, mas toda consulta
+ * de nota, falta, ocorrencia ou aviso deve passar por aqui em vez de confiar
+ * num id vindo da URL. Se um dia a regra de acesso mudar, muda num lugar so'.
  */
 export function podeVerEstudante(
   sessao: SessaoResponsavel,
   estudanteId: number
 ): boolean {
-  return sessao.acessiveis.some((e) => e.id === estudanteId);
+  return sessao.estudante.id === estudanteId;
 }
