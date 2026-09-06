@@ -2,7 +2,7 @@
 
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { query } from "@/lib/db";
+import { BancoIndisponivel, query } from "@/lib/db";
 import { registrarTentativa, limparTentativas } from "@/lib/limite";
 import { normalizarCpf } from "@/lib/normalizar";
 import { conferirSenha, gastarTempoDeSenha } from "@/lib/senha";
@@ -17,6 +17,13 @@ export interface EstadoLogin {
  * Distinguir os casos entregaria de graca a lista de quem estuda na escola.
  */
 const CREDENCIAL_INVALIDA = "CPF ou senha invalidos.";
+
+/**
+ * O responsavel nao tem o que fazer com um erro de conexao, mas precisa
+ * entender que o problema nao e' a senha dele -- senao vai tentar de novo
+ * ate se trancar no limite de tentativas.
+ */
+const SISTEMA_FORA = "O sistema esta temporariamente indisponivel. Tente de novo em alguns minutos.";
 
 async function origem(): Promise<string> {
   const cabecalhos = await headers();
@@ -48,14 +55,21 @@ export async function entrar(
     return { erro: CREDENCIAL_INVALIDA };
   }
 
-  const linhas = await query<{
+  let linhas: {
     id: number;
     senha_hash: string | null;
     precisa_trocar_senha: boolean;
-  }>(
-    "SELECT id, senha_hash, precisa_trocar_senha FROM estudantes WHERE cpf = $1",
-    [cpf]
-  );
+  }[];
+
+  try {
+    linhas = await query(
+      "SELECT id, senha_hash, precisa_trocar_senha FROM estudantes WHERE cpf = $1",
+      [cpf]
+    );
+  } catch (erro) {
+    if (erro instanceof BancoIndisponivel) return { erro: SISTEMA_FORA };
+    throw erro;
+  }
 
   const estudante = linhas[0];
 

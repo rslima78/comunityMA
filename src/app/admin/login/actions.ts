@@ -2,7 +2,7 @@
 
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { query } from "@/lib/db";
+import { BancoIndisponivel, query } from "@/lib/db";
 import { limparTentativas, registrarTentativa } from "@/lib/limite";
 import { conferirSenha, gastarTempoDeSenha } from "@/lib/senha";
 import { abrirSessao, fecharSessao } from "@/lib/sessao";
@@ -52,10 +52,21 @@ export async function entrarAdmin(
     return { erro: CREDENCIAL_INVALIDA };
   }
 
-  const linhas = await query<{ id: number; senha_hash: string }>(
-    "SELECT id, senha_hash FROM admins WHERE lower(usuario) = $1",
-    [usuario]
-  );
+  let linhas: { id: number; senha_hash: string }[];
+
+  try {
+    linhas = await query(
+      "SELECT id, senha_hash FROM admins WHERE lower(usuario) = $1",
+      [usuario]
+    );
+  } catch (erro) {
+    if (erro instanceof BancoIndisponivel) {
+      return {
+        erro: "O sistema esta temporariamente indisponivel. Tente de novo em alguns minutos.",
+      };
+    }
+    throw erro;
+  }
 
   const admin = linhas[0];
   if (!admin) {
