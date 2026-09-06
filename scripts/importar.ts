@@ -20,8 +20,16 @@ import { importarFamilias } from "./importadores/familias";
 import { importarFrequencia } from "./importadores/frequencia";
 import { importarNotas } from "./importadores/notas";
 import { importarOcorrencias } from "./importadores/ocorrencias";
+import { definirSenhasIniciais } from "./importadores/senhas";
 
-const COMANDOS = ["estudantes", "notas", "ocorrencias", "frequencia", "familias"] as const;
+const COMANDOS = [
+  "estudantes",
+  "notas",
+  "ocorrencias",
+  "frequencia",
+  "familias",
+  "senhas",
+] as const;
 type Comando = (typeof COMANDOS)[number];
 
 function ajuda(): never {
@@ -37,6 +45,7 @@ function ajuda(): never {
       "    ocorrencias <Ocorrencias TURMA.csv>",
       "    frequencia  <frequencia.csv>    arquivo unico da escola inteira",
       "    familias                        so' reagrupa as familias",
+      "    senhas                          define a senha inicial (DDMMAAAA)",
       "",
       "  --periodo=ANO  ano de referencia de notas e frequencia" +
         " (padrao: " + new Date().getFullYear() + ")",
@@ -55,7 +64,7 @@ async function main() {
     String(new Date().getFullYear());
 
   if (!comando || !COMANDOS.includes(comando)) ajuda();
-  if (comando !== "familias") {
+  if (comando !== "familias" && comando !== "senhas") {
     if (!arquivo) ajuda();
     if (!existsSync(arquivo)) {
       console.error("\n  arquivo nao encontrado: " + arquivo + "\n");
@@ -65,7 +74,7 @@ async function main() {
 
   const db: Client = await conectar();
   let relatorio: Relatorio;
-  let relatorioFamilias: Relatorio | null = null;
+  const extras: Relatorio[] = [];
 
   try {
     await db.query("BEGIN");
@@ -75,7 +84,9 @@ async function main() {
         relatorio = await importarEstudantes(db, arquivo!);
         // As familias saem da filiacao do proprio cadastro, entao nao faz
         // sentido deixar o agrupamento desatualizado depois de importar.
-        relatorioFamilias = await importarFamilias(db);
+        extras.push(await importarFamilias(db));
+        // Quem acabou de entrar precisa de senha para conseguir acessar.
+        extras.push(await definirSenhasIniciais(db));
         break;
       case "notas":
         relatorio = await importarNotas(db, arquivo!, periodo);
@@ -89,6 +100,9 @@ async function main() {
       case "familias":
         relatorio = await importarFamilias(db);
         break;
+      case "senhas":
+        relatorio = await definirSenhasIniciais(db);
+        break;
     }
 
     await db.query("COMMIT");
@@ -101,10 +115,11 @@ async function main() {
   }
 
   relatorio.finalizar();
-  relatorioFamilias?.finalizar();
+  for (const extra of extras) extra.finalizar();
 
   const pendencias =
-    relatorio.totalPendencias + (relatorioFamilias?.totalPendencias ?? 0);
+    relatorio.totalPendencias +
+    extras.reduce((total, extra) => total + extra.totalPendencias, 0);
 
   if (pendencias > 0) {
     console.log(

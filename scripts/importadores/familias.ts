@@ -1,5 +1,5 @@
 import type { Executor } from "../../src/lib/casamento";
-import { chaveFamilia } from "../../src/lib/normalizar";
+import { chaveFamilia, normalizarNome } from "../../src/lib/normalizar";
 import { Relatorio } from "../lib/relatorio";
 
 /** Acima disso, o agrupamento provavelmente juntou familias diferentes. */
@@ -9,9 +9,10 @@ const FILHOS_SUSPEITO = 5;
  * Reconstroi as familias a partir da filiacao dos estudantes.
  *
  * Dois estudantes com a mesma mae e o mesmo pai (normalizados) sao da mesma
- * familia. A familia e' so' agrupamento: nao tem CPF nem senha, e nao da'
- * acesso a nada -- o login fica no estudante. Por isso um agrupamento errado
- * por homonimo nao expoe dados de ninguem, mas ainda assim e' sinalizado.
+ * familia. A familia nao tem CPF nem senha -- o login fica no estudante --,
+ * mas desde a Etapa 3 ela define quem enxerga quem: entrar com o login de um
+ * filho da' acesso aos dados dos irmaos. Por isso todo agrupamento com cara
+ * de homonimo vira pendencia no relatorio.
  *
  * Roda inteiro, toda vez: e' idempotente e barato para menos de mil alunos.
  */
@@ -88,7 +89,37 @@ export async function importarFamilias(db: Executor) {
           `${grupo.nomes.join("; ")} -- conferir se sao mesmo irmaos`
       );
     }
+
+    // A familia deixou de ser so' rotulo: quem entra com o login de um filho
+    // enxerga os dados dos irmaos. Entao um agrupamento errado por homonimo
+    // expoe o aluno de outra familia, e precisa aparecer no relatorio.
+    if (grupo.ids.length > 1 && semSobrenomeEmComum(grupo.nomes)) {
+      relatorio.pendencia(
+        `agrupamento duvidoso: mae "${grupo.nome_mae ?? "-"}", pai ` +
+          `"${grupo.nome_pai ?? "-"}" juntou ${grupo.ids.length} estudantes que nao ` +
+          `compartilham nenhum sobrenome -> ${grupo.nomes.join("; ")} -- ` +
+          "se nao forem irmaos, o login de um vera os dados do outro"
+      );
+    }
   }
 
   return relatorio;
+}
+
+/**
+ * Heuristica simples de conferencia: irmaos quase sempre repetem ao menos um
+ * sobrenome. Quando nao repetem nenhum, o agrupamento provavelmente veio de
+ * duas maes homonimas -- vale a conferencia humana.
+ */
+function semSobrenomeEmComum(nomes: string[]): boolean {
+  const conjuntos = nomes.map(
+    (nome) => new Set(normalizarNome(nome).split(" ").slice(1))
+  );
+  const primeiro = conjuntos[0];
+  if (!primeiro || primeiro.size === 0) return false;
+
+  for (const sobrenome of primeiro) {
+    if (conjuntos.every((c) => c.has(sobrenome))) return false;
+  }
+  return true;
 }

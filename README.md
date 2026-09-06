@@ -13,7 +13,7 @@ por turma ou individuais.
 
 ```bash
 npm install
-cp .env.example .env.local   # ajuste DATABASE_URL se precisar
+cp .env.example .env.local   # ajuste DATABASE_URL e gere a SESSION_SECRET
 npm run db:up                # sobe o Postgres em localhost:5433
 npm run migrate              # cria o schema
 npm run dev                  # http://localhost:3000
@@ -78,13 +78,56 @@ Se nada casar, ou se houver mais de um candidato, a linha vira **pendencia**:
 nunca e' feito um chute. Ao final o comando imprime quantas foram e grava o
 detalhe em `relatorios/`, que fica fora do git por conter nomes de alunos.
 
+## Acesso
+
+Dois perfis, com sessoes separadas: um cookie de responsavel nao vale como
+admin nem o contrario, porque o escopo entra na assinatura.
+
+### Responsavel / estudante — `/login`
+
+- **usuario:** CPF do estudante
+- **senha inicial:** data de nascimento no formato `DDMMAAAA`
+- troca de senha **obrigatoria** no primeiro acesso, antes de qualquer tela
+- apos entrar, o portal carrega os irmaos da mesma familia -- um CPF e uma
+  senha dao acesso a todos os filhos, sem login adicional
+- erro sempre generico ("CPF ou senha invalidos"), e o tempo de resposta e' o
+  mesmo para CPF inexistente e senha errada, para nao revelar quem estuda aqui
+- 8 tentativas por CPF e IP a cada 15 minutos
+
+As senhas iniciais entram junto com o cadastro. Para gerar apenas as que
+faltam, sem tocar em quem ja' trocou a senha:
+
+```bash
+npm run importar -- senhas
+```
+
+### Administrador — `/admin/login`
+
+Nao existe cadastro publico de admin. O usuario inicial vem de variavel de
+ambiente:
+
+```bash
+npm run seed-admin
+```
+
+Le `ADMIN_USER` e `ADMIN_PASSWORD`. Rodar de novo com senha diferente troca a
+senha do usuario.
+
+### Senhas e sessao
+
+Hash com **scrypt** do proprio Node -- sem dependencia nativa para compilar no
+Railway. Os parametros ficam gravados junto do hash, entao podem mudar depois
+sem invalidar as senhas existentes.
+
+A sessao e' um cookie `httpOnly` assinado com HMAC-SHA256 usando
+`SESSION_SECRET`, valido por 8 horas. Trocar essa variavel desconecta todo
+mundo.
+
 ## Modelo de dados
 
 | tabela | conteudo |
 | --- | --- |
-| `estudantes` | cadastro vindo de `estudantes.xlsx`; chave `(matricula, turma)` |
-| `responsaveis` | login por CPF, senha em hash |
-| `responsavel_estudante` | juncao responsavel -> estudante(s) |
+| `estudantes` | cadastro vindo de `estudantes.xlsx`; chave `(matricula, turma)`; guarda tambem o login (CPF unico) e a senha |
 | `admins` | login do administrador |
 | `notas` | uma linha por estudante x disciplina x periodo |
 | `ocorrencias` | tipo, descricao e data |
@@ -101,12 +144,16 @@ o repositorio** — o `.gitignore` bloqueia `*.xlsx`, `*.xls` e `*.csv`.
 ## Deploy no Railway
 
 1. Provisione o plugin **Postgres**.
-2. No servico da aplicacao, defina `DATABASE_URL` (referencia a variavel do
-   plugin), `ADMIN_USER` e `ADMIN_PASSWORD`.
-3. Rode `npm run migrate` uma vez apontando para o banco do Railway.
+2. No servico da aplicacao, defina:
+   - `DATABASE_URL` = `${{Postgres.DATABASE_URL}}`
+   - `SESSION_SECRET` = 64 caracteres aleatorios
+   - `ADMIN_USER` e `ADMIN_PASSWORD`
+3. As migrations rodam sozinhas a cada deploy (ver `railway.json`).
+4. Rode `npm run seed-admin` uma vez para criar o administrador.
 
 ## Etapas
 
 - [x] **1** — modelagem de dados e setup inicial
 - [x] **2** — importacao das planilhas
-- [ ] 2 a 6 — a definir pelo Robson, uma de cada vez
+- [x] **3** — login do responsavel e do administrador
+- [ ] 4 a 6 — a definir pelo Robson, uma de cada vez

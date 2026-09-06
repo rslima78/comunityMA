@@ -1,34 +1,40 @@
 import { Pool } from "pg";
 import { sslParaConexao } from "./pg-ssl";
 
-const connectionString = process.env.DATABASE_URL;
+/**
+ * Pool do Postgres, criado na primeira consulta e nao na importacao do
+ * modulo: durante o build o Next carrega as rotas sem que DATABASE_URL
+ * precise existir, e um erro aqui derrubaria o build inteiro.
+ *
+ * Em desenvolvimento o Next recarrega os modulos a cada edicao; sem o cache
+ * global, cada reload abriria um pool novo ate estourar o limite de conexoes.
+ */
+const globalParaDb = globalThis as unknown as { poolMA?: Pool };
 
-if (!connectionString) {
-  throw new Error(
-    "DATABASE_URL nao definida. Copie .env.example para .env.local e preencha."
-  );
-}
+function obterPool(): Pool {
+  if (globalParaDb.poolMA) return globalParaDb.poolMA;
 
-// Em dev o Next recarrega os modulos a cada edicao; sem o cache global isso
-// abriria um pool novo por reload ate estourar o limite de conexoes.
-const globalForDb = globalThis as unknown as { pool?: Pool };
+  const connectionString = process.env.DATABASE_URL;
+  if (!connectionString) {
+    throw new Error(
+      "DATABASE_URL nao definida. Copie .env.example para .env.local e preencha."
+    );
+  }
 
-export const pool =
-  globalForDb.pool ??
-  new Pool({
+  const pool = new Pool({
     connectionString,
     ssl: sslParaConexao(connectionString),
     max: 10,
   });
 
-if (process.env.NODE_ENV !== "production") {
-  globalForDb.pool = pool;
+  globalParaDb.poolMA = pool;
+  return pool;
 }
 
-export async function query<T extends Record<string, unknown>>(
-  text: string,
-  params?: unknown[]
-) {
-  const result = await pool.query<T>(text, params);
-  return result.rows;
+export async function query<T = Record<string, unknown>>(
+  texto: string,
+  parametros?: unknown[]
+): Promise<T[]> {
+  const resultado = await obterPool().query(texto, parametros as unknown[]);
+  return resultado.rows as T[];
 }
