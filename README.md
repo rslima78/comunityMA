@@ -115,6 +115,35 @@ npm run seed-admin
 Le `ADMIN_USER` e `ADMIN_PASSWORD`. Rodar de novo com senha diferente troca a
 senha do usuario.
 
+### Tela do responsavel — `/portal`
+
+Pagina unica, somente leitura, mobile-first, com atalhos para as quatro
+secoes no topo:
+
+1. **Avisos** (em destaque) — os individuais do estudante mais os da turma
+   dele, misturados por data, mais recente primeiro. A turma e' lida na hora
+   do cadastro: aluno que muda de turma passa a ver os avisos da turma nova.
+2. **Notas** — um cartao por disciplina, com Unidade 1/2/3, Media Anual,
+   Exame Final e Media Final. Nota abaixo de 5,0 aparece em vermelho.
+3. **Faltas** — percentual (faltas / aulas) com a contagem e uma barra. A
+   partir de 25% acende alerta, que e' o limite da LDB para reprovacao por
+   frequencia.
+4. **Ocorrencias** — tipo, data e descricao, mais recente primeiro, com cor
+   por gravidade.
+
+Tudo e' buscado pelo id que veio da sessao assinada; nao existe parametro de
+estudante na URL para alguem trocar.
+
+**Nota que nao foi lancada aparece como travessao (—), nunca como zero.** O
+SIGEDUC exporta `0,0` em Media Anual, Exame Final e Media Final enquanto o ano
+nao fecha. Mostrar isso faria toda familia ver zero em vermelho em todas as
+disciplinas no meio do ano. A regra: o zero so' e' escondido quando contradiz
+as unidades -- se o aluno tem 5 e 7 nas unidades, uma media anual 0 nao foi
+calculada; se as unidades dele tambem sao 0, o zero e' real e aparece.
+
+A media de aprovacao e a linha de corte de faltas ficam em constantes no
+inicio de `src/lib/portal.ts`.
+
 ### Painel de avisos — `/admin`
 
 Atras do login de admin, na mesma tela:
@@ -174,4 +203,5 @@ o repositorio** — o `.gitignore` bloqueia `*.xlsx`, `*.xls` e `*.csv`.
 - [x] **2** — importacao das planilhas
 - [x] **3** — login do responsavel e do administrador
 - [x] **4** — painel de avisos do administrador
-- [ ] 5 e 6 — a definir pelo Robson, uma de cada vez
+- [x] **5** — tela de consulta do responsavel
+- [ ] 6 — a definir pelo Robson
