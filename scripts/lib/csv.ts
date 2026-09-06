@@ -17,13 +17,38 @@ export function lerCsv(arquivo: string): Record<string, string>[] {
   const virgula = (cabecalho.match(/,/g) ?? []).length;
   const delimiter = pontoEVirgula >= virgula ? ";" : ",";
 
-  return parse(bruto, {
-    columns: (cabecalho: string[]) => cabecalho.map((c) => c.trim()),
-    delimiter,
-    skip_empty_lines: true,
-    relax_column_count: true,
-    trim: true,
-  });
+  try {
+    return parse(bruto, {
+      columns: (cabecalho: string[]) => cabecalho.map((c) => c.trim()),
+      delimiter,
+      skip_empty_lines: true,
+      relax_column_count: true,
+      trim: true,
+    });
+  } catch (erro) {
+    // Acontece quando o arquivo nao e' CSV de verdade -- um .xlsx renomeado,
+    // por exemplo. Sem isto o usuario recebe uma pilha de erro do parser.
+    const motivo = primeiraLinha((erro as Error)?.message ?? String(erro));
+    throw new ArquivoIlegivel(
+      `Nao foi possivel ler "${basename(arquivo)}" como CSV. ` +
+        `Confira se o arquivo e' mesmo um CSV exportado do SIGEDUC. (${motivo})`,
+      { cause: erro }
+    );
+  }
+}
+
+/** Primeira linha de uma mensagem de erro, sem a pilha. */
+function primeiraLinha(texto: string): string {
+  const quebra = texto.search(/[\r\n]/);
+  return quebra === -1 ? texto : texto.slice(0, quebra);
+}
+
+/** Arquivo que nao da' para interpretar -- diferente de linha com problema. */
+export class ArquivoIlegivel extends Error {
+  constructor(mensagem: string, opcoes?: { cause?: unknown }) {
+    super(mensagem, opcoes);
+    this.name = "ArquivoIlegivel";
+  }
 }
 
 /**

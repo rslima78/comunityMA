@@ -58,8 +58,16 @@ Notas e ocorrencias sao um arquivo por turma; a turma sai do nome do arquivo,
 porque nenhum dos dois CSVs traz essa coluna. Importar `estudantes` ja define
 as senhas iniciais de quem ainda nao tem.
 
-Cada comando roda dentro de uma transacao: ou a planilha inteira entra, ou
-nada entra. Rodar o mesmo arquivo duas vezes nao duplica nada.
+Cada arquivo roda dentro de uma transacao, e cada linha dentro de um
+SAVEPOINT: uma linha com valor invalido vira pendencia no relatorio e as
+outras continuam entrando. Sem o savepoint, um unico erro deixaria a
+transacao em estado abortado e derrubaria a planilha inteira.
+
+Arquivo que nao da' para interpretar -- um .xlsx renomeado para .csv, por
+exemplo -- para antes de gravar qualquer coisa, com uma mensagem dizendo qual
+arquivo e por que.
+
+Rodar o mesmo arquivo duas vezes nao duplica nada.
 
 **Ordem obrigatoria:** `estudantes` primeiro. Notas, ocorrencias e frequencia
 so' conseguem casar com alunos que ja existem no banco.
@@ -144,6 +152,22 @@ calculada; se as unidades dele tambem sao 0, o zero e' real e aparece.
 A media de aprovacao e a linha de corte de faltas ficam em constantes no
 inicio de `src/lib/portal.ts`.
 
+### Reimportar planilhas — `/admin/importar`
+
+Para quando chegam planilhas atualizadas (nova unidade, novo bimestre), sem
+precisar de terminal:
+
+- **notas** e **ocorrencias** aceitam varias turmas de uma vez; a turma sai do
+  nome do arquivo, entao os arquivos nao podem ser renomeados
+- **frequencia** e' o arquivo unico da escola
+- cada arquivo tem a sua propria transacao: um corrompido nao desfaz os que ja
+  entraram
+- o resultado aparece na hora, com os contadores e a lista de linhas que nao
+  entraram
+
+O cadastro de estudantes continua so' pela linha de comando, porque cria
+logins e senhas iniciais.
+
 ### Painel de avisos — `/admin`
 
 Atras do login de admin, na mesma tela:
@@ -204,4 +228,4 @@ o repositorio** — o `.gitignore` bloqueia `*.xlsx`, `*.xls` e `*.csv`.
 - [x] **3** — login do responsavel e do administrador
 - [x] **4** — painel de avisos do administrador
 - [x] **5** — tela de consulta do responsavel
-- [ ] 6 — a definir pelo Robson
+- [x] **6** — polimento: erros de importacao e tela de reimportacao

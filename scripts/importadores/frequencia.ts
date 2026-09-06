@@ -1,6 +1,7 @@
 import { IndiceEstudantes, type Executor } from "../../src/lib/casamento";
 import { normalizarInteiro } from "../../src/lib/normalizar";
 import { lerCsv } from "../lib/csv";
+import { gravarLinha, motivoCurto } from "../lib/linha";
 import { Relatorio } from "../lib/relatorio";
 
 /**
@@ -95,14 +96,25 @@ export async function importarFrequencia(
 
     jaVistos.set(casamento.estudante.id, { linha: numeroLinha, aulas, faltas });
 
-    await db.query(
-      `INSERT INTO frequencia (estudante_id, total_aulas, total_faltas, periodo)
-       VALUES ($1, $2, $3, $4)
-       ON CONFLICT (estudante_id, periodo) DO UPDATE
-         SET total_aulas = EXCLUDED.total_aulas,
-             total_faltas = EXCLUDED.total_faltas`,
-      [casamento.estudante.id, aulas, faltas, periodo]
+    const falha = await gravarLinha(db, () =>
+      db
+        .query(
+          `INSERT INTO frequencia (estudante_id, total_aulas, total_faltas, periodo)
+           VALUES ($1, $2, $3, $4)
+           ON CONFLICT (estudante_id, periodo) DO UPDATE
+             SET total_aulas = EXCLUDED.total_aulas,
+                 total_faltas = EXCLUDED.total_faltas`,
+          [casamento.estudante.id, aulas, faltas, periodo]
+        )
+        .then(() => undefined)
     );
+
+    if (falha) {
+      relatorio.pendencia(
+        `linha ${numeroLinha}: "${aluno}" nao pode ser gravada -- ${motivoCurto(falha)}`
+      );
+      continue;
+    }
     relatorio.contar("gravados");
   }
 

@@ -7,6 +7,7 @@ import {
   normalizarMatricula,
   normalizarNome,
 } from "../../src/lib/normalizar";
+import { gravarLinha, motivoCurto } from "../lib/linha";
 import { Relatorio } from "../lib/relatorio";
 
 const COLUNAS = [
@@ -119,46 +120,55 @@ export async function importarEstudantes(db: Executor, arquivo: string) {
       continue;
     }
 
-    if (existentes.rows.length === 1) {
-      await db.query(
-        `UPDATE estudantes SET
-           nome = $1, nome_normalizado = $2, cpf = $3, serie = $4, turma = $5,
-           nascimento = $6, idade = $7, nome_mae = $8, nome_pai = $9
-         WHERE id = $10`,
-        [
-          campos.nome,
-          campos.nome_normalizado,
-          campos.cpf,
-          campos.serie,
-          campos.turma,
-          campos.nascimento,
-          campos.idade,
-          campos.nome_mae,
-          campos.nome_pai,
-          existentes.rows[0].id,
-        ]
+    const falha = await gravarLinha(db, async () => {
+      if (existentes.rows.length === 1) {
+        await db.query(
+          `UPDATE estudantes SET
+             nome = $1, nome_normalizado = $2, cpf = $3, serie = $4, turma = $5,
+             nascimento = $6, idade = $7, nome_mae = $8, nome_pai = $9
+           WHERE id = $10`,
+          [
+            campos.nome,
+            campos.nome_normalizado,
+            campos.cpf,
+            campos.serie,
+            campos.turma,
+            campos.nascimento,
+            campos.idade,
+            campos.nome_mae,
+            campos.nome_pai,
+            existentes.rows[0].id,
+          ]
+        );
+        relatorio.contar("atualizados");
+      } else {
+        await db.query(
+          `INSERT INTO estudantes
+             (nome, nome_normalizado, matricula, cpf, serie, turma,
+              nascimento, idade, nome_mae, nome_pai)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
+          [
+            campos.nome,
+            campos.nome_normalizado,
+            campos.matricula,
+            campos.cpf,
+            campos.serie,
+            campos.turma,
+            campos.nascimento,
+            campos.idade,
+            campos.nome_mae,
+            campos.nome_pai,
+          ]
+        );
+        relatorio.contar("inseridos");
+      }
+    });
+
+    if (falha) {
+      relatorio.pendencia(
+        `linha ${numeroLinha}: ${nome} nao pode ser gravado -- ${motivoCurto(falha)}`
       );
-      relatorio.contar("atualizados");
-    } else {
-      await db.query(
-        `INSERT INTO estudantes
-           (nome, nome_normalizado, matricula, cpf, serie, turma,
-            nascimento, idade, nome_mae, nome_pai)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
-        [
-          campos.nome,
-          campos.nome_normalizado,
-          campos.matricula,
-          campos.cpf,
-          campos.serie,
-          campos.turma,
-          campos.nascimento,
-          campos.idade,
-          campos.nome_mae,
-          campos.nome_pai,
-        ]
-      );
-      relatorio.contar("inseridos");
+      continue;
     }
 
     relatorio.contar("linhas lidas");

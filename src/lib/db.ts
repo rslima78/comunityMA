@@ -109,3 +109,43 @@ export const bancoPrincipal = {
     return { rows: await query<T>(texto, parametros) };
   },
 };
+
+/**
+ * Roda um bloco dentro de uma transacao, numa conexao dedicada.
+ *
+ * BEGIN/COMMIT direto no pool nao funciona: cada query pode sair por uma
+ * conexao diferente, e o COMMIT acabaria em outra conexao que nunca viu o
+ * BEGIN. Por isso a conexao e' reservada e devolvida no fim.
+ */
+export async function comTransacao<T>(
+  acao: (db: {
+    query<R = Record<string, unknown>>(
+      texto: string,
+      parametros?: unknown[]
+    ): Promise<{ rows: R[] }>;
+  }) => Promise<T>
+): Promise<T> {
+  const cliente = await obterPool().connect();
+
+  const executor = {
+    async query<R = Record<string, unknown>>(
+      texto: string,
+      parametros?: unknown[]
+    ): Promise<{ rows: R[] }> {
+      const resultado = await cliente.query(texto, parametros as unknown[]);
+      return { rows: resultado.rows as R[] };
+    },
+  };
+
+  try {
+    await cliente.query("BEGIN");
+    const resultado = await acao(executor);
+    await cliente.query("COMMIT");
+    return resultado;
+  } catch (erro) {
+    await cliente.query("ROLLBACK");
+    throw erro;
+  } finally {
+    cliente.release();
+  }
+}

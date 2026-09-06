@@ -1,6 +1,7 @@
 import { IndiceEstudantes, type Executor } from "../../src/lib/casamento";
 import { normalizarData } from "../../src/lib/normalizar";
 import { lerCsv, turmaDoArquivo } from "../lib/csv";
+import { gravarLinha, motivoCurto } from "../lib/linha";
 import { Relatorio } from "../lib/relatorio";
 
 /**
@@ -71,11 +72,22 @@ export async function importarOcorrencias(db: Executor, arquivo: string) {
       continue;
     }
 
-    await db.query(
-      `INSERT INTO ocorrencias (estudante_id, tipo, descricao, data)
-       VALUES ($1, $2, $3, $4)`,
-      [casamento.estudante.id, tipo, descricao, data]
+    const falha = await gravarLinha(db, () =>
+      db
+        .query(
+          `INSERT INTO ocorrencias (estudante_id, tipo, descricao, data)
+           VALUES ($1, $2, $3, $4)`,
+          [casamento.estudante.id, tipo, descricao, data]
+        )
+        .then(() => undefined)
     );
+
+    if (falha) {
+      relatorio.pendencia(
+        `linha ${numeroLinha}: "${nome}" nao pode ser gravada -- ${motivoCurto(falha)}`
+      );
+      continue;
+    }
     relatorio.contar("gravadas");
   }
 

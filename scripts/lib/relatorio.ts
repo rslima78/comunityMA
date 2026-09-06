@@ -3,6 +3,13 @@ import { join } from "node:path";
 
 type Nivel = "pendencia" | "aviso";
 
+export interface ResumoDaImportacao {
+  titulo: string;
+  contadores: [string, number][];
+  pendencias: string[];
+  avisos: string[];
+}
+
 /**
  * Coleta o que a importacao nao conseguiu resolver.
  *
@@ -33,6 +40,22 @@ export class Relatorio {
 
   get totalPendencias() {
     return this.contadores.get("pendencias") ?? 0;
+  }
+
+  /**
+   * Mesmo conteudo do relatorio, em dados, para a tela de importacao do
+   * admin. No Railway o disco e' efemero, entao la' o relatorio nao pode
+   * depender de arquivo: ele e' devolvido e mostrado na hora.
+   */
+  resumo(): ResumoDaImportacao {
+    return {
+      titulo: this.titulo,
+      contadores: [...this.contadores],
+      pendencias: this.linhas
+        .filter((l) => l.nivel === "pendencia")
+        .map((l) => l.texto),
+      avisos: this.linhas.filter((l) => l.nivel === "aviso").map((l) => l.texto),
+    };
   }
 
   /** Imprime o resumo e grava o detalhe. Devolve o caminho do arquivo, se houver. */

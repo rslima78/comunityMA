@@ -34,14 +34,22 @@ export default async function PaginaAdmin() {
             Conectado como {admin.usuario}
           </p>
         </div>
-        <form action={sairAdmin}>
-          <button
-            type="submit"
+        <div className="flex shrink-0 gap-2">
+          <a
+            href="/admin/importar"
             className="rounded-xl border border-[var(--color-outline)] px-3 py-2 text-sm font-medium"
           >
-            Sair
-          </button>
-        </form>
+            Importar
+          </a>
+          <form action={sairAdmin}>
+            <button
+              type="submit"
+              className="rounded-xl border border-[var(--color-outline)] px-3 py-2 text-sm font-medium"
+            >
+              Sair
+            </button>
+          </form>
+        </div>
       </header>
 
       <Cartao>

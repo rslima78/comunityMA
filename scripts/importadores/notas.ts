@@ -5,6 +5,7 @@ import {
   semAcento,
 } from "../../src/lib/normalizar";
 import { lerCsv, turmaDoArquivo } from "../lib/csv";
+import { gravarLinha, motivoCurto } from "../lib/linha";
 import { Relatorio } from "../lib/relatorio";
 
 /** Rotulo do CSV -> coluna da tabela. Sem lista fixa de disciplinas. */
@@ -113,8 +114,9 @@ export async function importarNotas(
         continue;
       }
 
-      await db.query(
-        `INSERT INTO notas
+      const falha = await gravarLinha(db, () =>
+        db.query(
+          `INSERT INTO notas
            (estudante_id, disciplina, unidade1, unidade2, unidade3,
             media_anual, exame_final, media_final, periodo)
          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
@@ -124,9 +126,17 @@ export async function importarNotas(
                unidade3 = EXCLUDED.unidade3,
                media_anual = EXCLUDED.media_anual,
                exame_final = EXCLUDED.exame_final,
-               media_final = EXCLUDED.media_final`,
-        [casamento.estudante.id, bloco.disciplina, ...valores, periodo]
+                 media_final = EXCLUDED.media_final`,
+          [casamento.estudante.id, bloco.disciplina, ...valores, periodo]
+        ).then(() => undefined)
       );
+
+      if (falha) {
+        relatorio.pendencia(
+          `linha ${numeroLinha}: "${nome}", ${bloco.disciplina} -- ${motivoCurto(falha)}`
+        );
+        continue;
+      }
       relatorio.contar("notas gravadas");
     }
 
