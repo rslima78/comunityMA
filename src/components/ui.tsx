@@ -92,3 +92,67 @@ export function Alerta({
     </p>
   );
 }
+
+export function AreaTexto({
+  rotulo,
+  dica,
+  ...props
+}: { rotulo: string; dica?: string } & ComponentProps<"textarea">) {
+  return (
+    <label className="block">
+      <span className="text-sm font-medium text-[var(--color-text-muted)]">
+        {rotulo}
+      </span>
+      <textarea
+        {...props}
+        className="mt-1 min-h-32 w-full rounded-xl border border-[var(--color-outline)] bg-[var(--color-canvas)] px-3 py-2 text-base outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)]"
+      />
+      {dica ? (
+        <span className="mt-1 block text-xs text-[var(--color-text-muted)]">
+          {dica}
+        </span>
+      ) : null}
+    </label>
+  );
+}
+
+export function Selecao({
+  rotulo,
+  children,
+  ...props
+}: { rotulo: string } & ComponentProps<"select">) {
+  return (
+    <label className="block">
+      <span className="text-sm font-medium text-[var(--color-text-muted)]">
+        {rotulo}
+      </span>
+      <select
+        {...props}
+        className="mt-1 h-12 w-full rounded-xl border border-[var(--color-outline)] bg-[var(--color-canvas)] px-3 text-base outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)]"
+      >
+        {children}
+      </select>
+    </label>
+  );
+}
+
+export function Etiqueta({
+  tom,
+  children,
+}: {
+  tom: "turma" | "estudante";
+  children: ReactNode;
+}) {
+  const cores =
+    tom === "turma"
+      ? "bg-[var(--color-primary-container)] text-[var(--color-on-primary-container)]"
+      : "bg-[var(--color-success-container)] text-[var(--color-on-success-container)]";
+
+  return (
+    <span
+      className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${cores}`}
+    >
+      {children}
+    </span>
+  );
+}

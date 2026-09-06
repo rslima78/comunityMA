@@ -115,6 +115,23 @@ npm run seed-admin
 Le `ADMIN_USER` e `ADMIN_PASSWORD`. Rodar de novo com senha diferente troca a
 senha do usuario.
 
+### Painel de avisos — `/admin`
+
+Atras do login de admin, na mesma tela:
+
+- **compor** titulo (ate 120 caracteres) e mensagem (ate 2000)
+- **escolher o destino**: uma turma inteira, escolhida entre as turmas que
+  existem no cadastro, com a quantidade de estudantes de cada uma; ou um
+  estudante, buscado por nome ou matricula
+- **enviar**, com `data_envio` preenchida pelo banco
+- **historico** dos ultimos 50, mais recente primeiro, com o destino em
+  destaque: azul para turma (com o alcance) e verde para estudante
+
+Um aviso tem sempre um unico destino -- turma **ou** estudante. Isso e'
+garantido por CHECK no banco, nao so pela tela.
+
+Nao ha edicao nem exclusao de aviso, e nao ha confirmacao de leitura.
+
 ### Senhas e sessao
 
 Hash com **scrypt** do proprio Node -- sem dependencia nativa para compilar no
@@ -156,4 +173,5 @@ o repositorio** — o `.gitignore` bloqueia `*.xlsx`, `*.xls` e `*.csv`.
 - [x] **1** — modelagem de dados e setup inicial
 - [x] **2** — importacao das planilhas
 - [x] **3** — login do responsavel e do administrador
-- [ ] 4 a 6 — a definir pelo Robson, uma de cada vez
+- [x] **4** — painel de avisos do administrador
+- [ ] 5 e 6 — a definir pelo Robson, uma de cada vez

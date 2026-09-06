@@ -38,3 +38,17 @@ export async function query<T = Record<string, unknown>>(
   const resultado = await obterPool().query(texto, parametros as unknown[]);
   return resultado.rows as T[];
 }
+
+/**
+ * A mesma conexao, no formato que as funcoes de consulta esperam. Existir em
+ * duas formas permite que essas funcoes rodem contra um Postgres de teste sem
+ * mudar nada no codigo de producao.
+ */
+export const bancoPrincipal = {
+  async query<T = Record<string, unknown>>(
+    texto: string,
+    parametros?: unknown[]
+  ): Promise<{ rows: T[] }> {
+    return { rows: await query<T>(texto, parametros) };
+  },
+};
