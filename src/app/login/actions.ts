@@ -55,15 +55,11 @@ export async function entrar(
     return { erro: CREDENCIAL_INVALIDA };
   }
 
-  let linhas: {
-    id: number;
-    senha_hash: string | null;
-    precisa_trocar_senha: boolean;
-  }[];
+  let linhas: { id: number; senha_hash: string | null }[];
 
   try {
     linhas = await query(
-      "SELECT id, senha_hash, precisa_trocar_senha FROM estudantes WHERE cpf = $1",
+      "SELECT id, senha_hash FROM estudantes WHERE cpf = $1",
       [cpf]
     );
   } catch (erro) {
@@ -87,7 +83,7 @@ export async function entrar(
   limparTentativas(`login:${await origem()}:${cpf}`);
   await abrirSessao("responsavel", estudante.id);
 
-  redirect(estudante.precisa_trocar_senha ? "/trocar-senha" : "/portal");
+  redirect("/portal");
 }
 
 export async function sair() {

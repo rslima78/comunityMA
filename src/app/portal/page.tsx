@@ -30,7 +30,7 @@ const ATALHOS = [
  * de estudante na URL para alguem trocar. Um login enxerga um estudante.
  */
 export default async function PaginaPortal() {
-  const { estudante } = await exigirResponsavel();
+  const { estudante, usandoSenhaInicial } = await exigirResponsavel();
 
   const [avisos, notas, frequencia, ocorrencias] = await Promise.all([
     avisosDoEstudante(bancoPrincipal, estudante.id),
@@ -76,10 +76,32 @@ export default async function PaginaPortal() {
       </header>
 
       <main className="flex flex-col gap-6 p-4">
+        {usandoSenhaInicial ? (
+          <a
+            href="/trocar-senha"
+            className="flex items-center justify-between gap-3 rounded-2xl border border-[var(--color-outline)] bg-[var(--color-warning-container)] px-4 py-3 text-[var(--color-on-warning-container)]"
+          >
+            <span className="text-sm">
+              Sua senha ainda é a data de nascimento, que outras pessoas podem
+              saber. <strong className="font-semibold">Trocar agora</strong>
+            </span>
+            <span aria-hidden className="shrink-0 text-lg">
+              ›
+            </span>
+          </a>
+        ) : null}
+
         <SecaoAvisos avisos={avisos} />
         <SecaoNotas notas={notas} />
         <SecaoFaltas frequencia={frequencia} />
         <SecaoOcorrencias ocorrencias={ocorrencias} />
+
+        <a
+          href="/trocar-senha"
+          className="mt-2 text-center text-sm font-medium text-[var(--color-primary)] underline"
+        >
+          Trocar minha senha
+        </a>
       </main>
     </div>
   );

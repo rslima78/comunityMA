@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 export default async function PaginaLogin() {
   // Quem ja' esta' autenticado nao precisa ver o formulario de novo.
   const sessao = await carregarSessaoResponsavel();
-  if (sessao) redirect(sessao.precisaTrocarSenha ? "/trocar-senha" : "/portal");
+  if (sessao) redirect("/portal");
 
   return (
     <Tela

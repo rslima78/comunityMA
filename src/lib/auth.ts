@@ -12,7 +12,8 @@ export type EstudanteDaSessao = {
 
 export interface SessaoResponsavel {
   estudante: EstudanteDaSessao;
-  precisaTrocarSenha: boolean;
+  /** true enquanto a senha for a inicial (data de nascimento). */
+  usandoSenhaInicial: boolean;
 }
 
 /**
@@ -51,19 +52,21 @@ export async function carregarSessaoResponsavel(): Promise<SessaoResponsavel | n
       serie: estudante.serie,
       turma: estudante.turma,
     },
-    precisaTrocarSenha: estudante.precisa_trocar_senha,
+    usandoSenhaInicial: estudante.precisa_trocar_senha,
   };
 }
 
 /**
- * Guarda das telas do responsavel: exige sessao valida e, enquanto a senha
- * inicial nao for trocada, empurra para a troca antes de liberar qualquer
- * outra pagina.
+ * Guarda das telas do responsavel: exige sessao valida.
+ *
+ * A troca de senha e' opcional. Quem ainda usa a senha inicial entra
+ * normalmente e ve um convite para trocar no portal -- prender a familia numa
+ * tela de senha antes de deixar ver as notas afastaria justamente quem menos
+ * tem intimidade com o sistema.
  */
 export async function exigirResponsavel(): Promise<SessaoResponsavel> {
   const sessao = await carregarSessaoResponsavel();
   if (!sessao) redirect("/login");
-  if (sessao.precisaTrocarSenha) redirect("/trocar-senha");
   return sessao;
 }
 

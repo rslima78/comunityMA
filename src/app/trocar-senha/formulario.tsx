@@ -4,7 +4,11 @@ import { useActionState } from "react";
 import { Alerta, Botao, Campo } from "@/components/ui";
 import { trocarSenha, type EstadoTroca } from "./actions";
 
-export function FormularioTroca({ primeiroAcesso }: { primeiroAcesso: boolean }) {
+export function FormularioTroca({
+  usandoSenhaInicial,
+}: {
+  usandoSenhaInicial: boolean;
+}) {
   const [estado, acao, enviando] = useActionState<EstadoTroca, FormData>(
     trocarSenha,
     {}
@@ -12,9 +16,11 @@ export function FormularioTroca({ primeiroAcesso }: { primeiroAcesso: boolean })
 
   return (
     <form action={acao} className="flex flex-col gap-4">
-      {primeiroAcesso ? (
+      {usandoSenhaInicial ? (
         <Alerta tipo="aviso">
-          Este e o primeiro acesso. Escolha uma senha antes de continuar.
+          Sua senha ainda é a data de nascimento do estudante, que outras
+          pessoas podem saber. Escolher uma senha própria deixa os dados dele
+          mais protegidos.
         </Alerta>
       ) : null}
 
@@ -28,7 +34,7 @@ export function FormularioTroca({ primeiroAcesso }: { primeiroAcesso: boolean })
         required
         autoFocus
         dica={
-          primeiroAcesso
+          usandoSenhaInicial
             ? "E a data de nascimento do estudante: DDMMAAAA."
             : undefined
         }

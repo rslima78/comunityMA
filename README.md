@@ -95,7 +95,11 @@ admin nem o contrario, porque o escopo entra na assinatura.
 
 - **usuario:** CPF do estudante
 - **senha inicial:** data de nascimento no formato `DDMMAAAA`
-- troca de senha **obrigatoria** no primeiro acesso, antes de qualquer tela
+- **troca de senha opcional.** Quem ainda usa a senha inicial entra normalmente
+  e ve um aviso no topo do portal convidando a trocar; o link tambem fica no
+  rodape para quem quiser trocar de novo depois. Prender a familia numa tela
+  de senha antes de deixar ver as notas afastaria justamente quem menos tem
+  intimidade com o sistema
 - **um login da acesso a exatamente um estudante.** Responsavel com mais de um
   filho entra com o CPF de cada um, um de cada vez. Nao existe agrupamento por
   familia: ele dependeria dos nomes de mae e pai digitados na secretaria, e um
