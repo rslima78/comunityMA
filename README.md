@@ -145,9 +145,14 @@ secoes no topo:
    do cadastro: aluno que muda de turma passa a ver os avisos da turma nova.
 2. **Notas** — um cartao por disciplina, com Unidade 1/2/3, Media Anual,
    Exame Final e Media Final. Nota abaixo de 5,0 aparece em vermelho.
-3. **Faltas** — percentual (faltas / aulas) com a contagem e uma barra. A
-   partir de 25% acende alerta, que e' o limite da LDB para reprovacao por
-   frequencia.
+3. **Faltas** — percentual com a contagem e uma barra; a partir de 25% acende
+   alerta, que e' o limite da LDB para reprovacao por frequencia.
+
+   Uma falta e' de **uma aula**, nao de um dia, entao o cartao mostra as duas
+   medidas: "235 faltas (47 dias)". Quando o arquivo importado traz o total de
+   aulas dadas, o percentual sai dele; quando nao traz -- o caso dos arquivos
+   por turma --, sai de `faltas / 5` dias sobre `70` dias letivos. As duas
+   constantes ficam no inicio de `src/lib/portal.ts`.
 4. **Ocorrencias** — tipo, data e descricao, mais recente primeiro, com cor
    por gravidade.
 

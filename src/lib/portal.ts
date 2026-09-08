@@ -12,6 +12,21 @@ export const MEDIA_APROVACAO = 5;
 /** Acima disso a frequencia acende alerta (limite da LDB para reprovacao). */
 export const LIMITE_FALTAS = 25;
 
+/**
+ * O sistema da escola nao informa o total de aulas dadas, so' o total de
+ * faltas -- e uma falta e' de uma aula, nao de um dia. Estes dois numeros
+ * convertem uma coisa na outra:
+ *
+ *   dias faltados = faltas / AULAS_POR_DIA
+ *   percentual    = dias faltados / DIAS_LETIVOS
+ *
+ * Sao a base combinada com a escola. Quando o arquivo importado trouxer o
+ * total de aulas de verdade (o relatorio do SIGEDUC traz), ele tem
+ * preferencia e estes numeros nao sao usados.
+ */
+export const AULAS_POR_DIA = 5;
+export const DIAS_LETIVOS = 70;
+
 export interface AvisoDoEstudante {
   id: number;
   titulo: string;
@@ -184,14 +199,39 @@ export function formatarDisciplina(nota: NotaDaDisciplina): DisciplinaFormatada 
   };
 }
 
-/** Percentual de faltas. null quando nao ha aulas registradas. */
+/** Dias de aula perdidos, a partir do total de faltas. */
+export function diasFaltados(
+  frequencia: FrequenciaDoEstudante | null
+): number | null {
+  const faltas = frequencia?.total_faltas;
+  if (faltas === null || faltas === undefined) return null;
+  return faltas / AULAS_POR_DIA;
+}
+
+/**
+ * Percentual de faltas.
+ *
+ * Usa o total de aulas quando ele existe no registro; senao, cai para os dias
+ * letivos combinados. Devolve null so' quando nao ha' faltas registradas.
+ */
 export function percentualDeFaltas(
   frequencia: FrequenciaDoEstudante | null
 ): number | null {
   if (!frequencia) return null;
   const { total_aulas: aulas, total_faltas: faltas } = frequencia;
-  if (aulas === null || faltas === null || aulas <= 0) return null;
-  return (faltas / aulas) * 100;
+  if (faltas === null) return null;
+
+  if (aulas !== null && aulas > 0) return (faltas / aulas) * 100;
+
+  const dias = faltas / AULAS_POR_DIA;
+  return (dias / DIAS_LETIVOS) * 100;
+}
+
+/** "47" ou "4,6" -- inteiro quando exato, uma casa quando nao. */
+export function formatarDias(dias: number): string {
+  return Number.isInteger(dias)
+    ? String(dias)
+    : dias.toFixed(1).replace(".", ",");
 }
 
 /** Nota com virgula e uma casa, ou travessao quando nao lancada. */

@@ -59,11 +59,12 @@ export class ArquivoIlegivel extends Error {
  *   "Notas_-_6ºA.csv"        -> "6ºA"
  *   "Ocorrencias 6A.csv"     -> "6A"
  *   "Ocorrencias_EVI - TURMA C.csv" -> "EVI - TURMA C"
+ *   "faltas_6ºA.csv"         -> "6ºA"
  */
 export function turmaDoArquivo(arquivo: string): string | null {
   const nome = basename(arquivo).replace(/\.[^.]+$/, "");
   const semPrefixo = nome
-    .replace(/^(notas|ocorr[eê]ncias?)/i, "")
+    .replace(/^(notas|ocorr[eê]ncias?|faltas|frequ[eê]ncia)/i, "")
     .replace(/^[\s_-]+/, "")
     .trim();
   return semPrefixo === "" ? null : semPrefixo;

@@ -1,4 +1,7 @@
 import {
+  diasFaltados,
+  DIAS_LETIVOS,
+  formatarDias,
   formatarNota,
   formatarDisciplina,
   LIMITE_FALTAS,
@@ -210,6 +213,8 @@ export function SecaoFaltas({
 }) {
   const percentual = percentualDeFaltas(frequencia);
   const acimaDoLimite = percentual !== null && percentual >= LIMITE_FALTAS;
+  const dias = diasFaltados(frequencia);
+  const faltas = frequencia?.total_faltas ?? 0;
 
   return (
     <Secao id="faltas" titulo="Faltas">
@@ -225,10 +230,18 @@ export function SecaoFaltas({
                   : `${percentual.toFixed(1).replace(".", ",")}%`}
               </p>
               <p className="text-sm text-[var(--color-text-muted)]">
-                {frequencia.total_faltas ?? 0} falta
-                {frequencia.total_faltas === 1 ? "" : "s"} em{" "}
-                {frequencia.total_aulas ?? 0} aula
-                {frequencia.total_aulas === 1 ? "" : "s"}
+                {faltas} falta{faltas === 1 ? "" : "s"}
+                {dias !== null ? (
+                  <>
+                    {" "}
+                    <span className="font-medium">
+                      ({formatarDias(dias)} dia{dias === 1 ? "" : "s"})
+                    </span>
+                  </>
+                ) : null}
+                {frequencia.total_aulas !== null && frequencia.total_aulas > 0
+                  ? ` em ${frequencia.total_aulas} aulas`
+                  : ""}
               </p>
             </div>
             <span
@@ -260,7 +273,10 @@ export function SecaoFaltas({
           ) : null}
 
           <p className="mt-3 text-xs text-[var(--color-text-muted)]">
-            A partir de {LIMITE_FALTAS}% de faltas o estudante fica em risco de
+            {frequencia.total_aulas !== null && frequencia.total_aulas > 0
+              ? "Percentual sobre o total de aulas dadas."
+              : `Cada 5 faltas equivalem a 1 dia de aula. O percentual é calculado sobre ${DIAS_LETIVOS} dias letivos.`}{" "}
+            A partir de {LIMITE_FALTAS}% o estudante fica em risco de
             reprovação por frequência. Totais do período {frequencia.periodo}.
           </p>
         </div>
