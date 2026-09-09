@@ -4,10 +4,12 @@ import {
   formatarDias,
   formatarNota,
   formatarDisciplina,
+  faixaDeFrequencia,
+  FREQUENCIA_ATENCAO,
   FREQUENCIA_REPROVACAO_DIRETA,
   MEDIA_APROVACAO,
   percentualDeFrequencia,
-  reprovadoPorFaltas,
+  type NivelDeFrequencia,
   type AvisoDoEstudante,
   type FrequenciaDoEstudante,
   type NotaDaDisciplina,
@@ -207,6 +209,84 @@ export function SecaoNotas({ notas }: { notas: NotaDaDisciplina[] }) {
   );
 }
 
+/**
+ * Cor e rotulo de cada faixa de frequencia.
+ *
+ * So' a faixa de reprovacao afirma reprovacao -- as outras duas sao alerta da
+ * escola, e o texto delas nao pode soar como veredito da Secretaria.
+ */
+const ESTILO_DA_FAIXA: Record<
+  NivelDeFrequencia,
+  { rotulo: string; etiqueta: string; barra: string }
+> = {
+  reprovado: {
+    rotulo: "Reprovado por faltas",
+    etiqueta:
+      "bg-[var(--color-danger-container)] text-[var(--color-on-danger-container)]",
+    barra: "bg-[var(--color-danger)]",
+  },
+  perigo: {
+    rotulo: "Frequência crítica",
+    etiqueta:
+      "bg-[var(--color-danger-container)] text-[var(--color-on-danger-container)]",
+    barra: "bg-[var(--color-danger)]",
+  },
+  atencao: {
+    rotulo: "Frequência baixa",
+    etiqueta:
+      "bg-[var(--color-warning-container)] text-[var(--color-on-warning-container)]",
+    barra: "bg-[var(--color-warning)]",
+  },
+  regular: {
+    rotulo: "Sem reprovação por faltas",
+    etiqueta:
+      "bg-[var(--color-success-container)] text-[var(--color-on-success-container)]",
+    barra: "bg-[var(--color-success)]",
+  },
+};
+
+function RecadoDaFrequencia({ faixa }: { faixa: NivelDeFrequencia }) {
+  if (faixa === "reprovado") {
+    return (
+      <p className="mt-3 rounded-xl bg-[var(--color-danger-container)] px-3 py-2 text-sm font-medium text-[var(--color-on-danger-container)]">
+        A frequência está em {FREQUENCIA_REPROVACAO_DIRETA}% ou menos. Por essa
+        regra da Secretaria de Educação, o estudante é reprovado por faltas
+        mesmo que as notas estejam boas.{" "}
+        <strong className="font-bold">
+          Procure a escola com urgência.
+        </strong>
+      </p>
+    );
+  }
+
+  if (faixa === "perigo") {
+    return (
+      <p className="mt-3 rounded-xl bg-[var(--color-danger-container)] px-3 py-2 text-sm font-medium text-[var(--color-on-danger-container)]">
+        A frequência está muito baixa e perto do limite de{" "}
+        {FREQUENCIA_REPROVACAO_DIRETA}%, em que a reprovação por faltas acontece
+        mesmo com notas boas. Procure a escola.
+      </p>
+    );
+  }
+
+  if (faixa === "atencao") {
+    return (
+      <p className="mt-3 rounded-xl bg-[var(--color-warning-container)] px-3 py-2 text-sm text-[var(--color-on-warning-container)]">
+        A frequência está abaixo de {FREQUENCIA_ATENCAO}%. Com{" "}
+        {FREQUENCIA_REPROVACAO_DIRETA}% ou menos, o estudante é reprovado por
+        faltas independentemente das notas.
+      </p>
+    );
+  }
+
+  return (
+    <p className="mt-3 text-sm text-[var(--color-text-muted)]">
+      Com {FREQUENCIA_REPROVACAO_DIRETA}% ou menos de frequência, o estudante é
+      reprovado direto por faltas, independentemente das notas.
+    </p>
+  );
+}
+
 export function SecaoFaltas({
   frequencia,
 }: {
@@ -215,7 +295,8 @@ export function SecaoFaltas({
   // A tela fala em frequencia, e nao em faltas: e' o numero que a Secretaria
   // usa e o que a familia ouve na reuniao.
   const presenca = percentualDeFrequencia(frequencia);
-  const reprovado = reprovadoPorFaltas(presenca);
+  const faixa = faixaDeFrequencia(presenca) ?? "regular";
+  const estilo = ESTILO_DA_FAIXA[faixa];
   const dias = diasFaltados(frequencia);
   const faltas = frequencia?.total_faltas ?? 0;
 
@@ -251,13 +332,9 @@ export function SecaoFaltas({
               </p>
             </div>
             <span
-              className={`shrink-0 rounded-full px-2.5 py-1 text-center text-xs font-medium ${
-                reprovado
-                  ? "bg-[var(--color-danger-container)] text-[var(--color-on-danger-container)]"
-                  : "bg-[var(--color-success-container)] text-[var(--color-on-success-container)]"
-              }`}
+              className={`shrink-0 rounded-full px-2.5 py-1 text-center text-xs font-medium ${estilo.etiqueta}`}
             >
-              {reprovado ? "Reprovado por faltas" : "Sem reprovação por faltas"}
+              {estilo.rotulo}
             </span>
           </div>
 
@@ -268,29 +345,13 @@ export function SecaoFaltas({
               aria-label={`${presenca.toFixed(1)}% de frequência`}
             >
               <div
-                className={`h-full rounded-full ${
-                  reprovado
-                    ? "bg-[var(--color-danger)]"
-                    : "bg-[var(--color-success)]"
-                }`}
+                className={`h-full rounded-full ${estilo.barra}`}
                 style={{ width: `${presenca}%` }}
               />
             </div>
           ) : null}
 
-          {reprovado ? (
-            <p className="mt-3 rounded-xl bg-[var(--color-danger-container)] px-3 py-2 text-sm font-medium text-[var(--color-on-danger-container)]">
-              A frequência está em {FREQUENCIA_REPROVACAO_DIRETA}% ou menos.
-              Por essa regra da Secretaria de Educação, o estudante é reprovado
-              por faltas mesmo que as notas estejam boas. Procure a escola.
-            </p>
-          ) : (
-            <p className="mt-3 text-sm text-[var(--color-text-muted)]">
-              Com {FREQUENCIA_REPROVACAO_DIRETA}% ou menos de frequência, o
-              estudante é reprovado direto por faltas, independentemente das
-              notas.
-            </p>
-          )}
+          <RecadoDaFrequencia faixa={faixa} />
 
           <p className="mt-2 text-xs text-[var(--color-text-muted)]">
             {frequencia.total_aulas !== null && frequencia.total_aulas > 0

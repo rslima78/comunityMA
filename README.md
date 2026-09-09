@@ -144,10 +144,19 @@ secoes no topo:
    dele, misturados por data, mais recente primeiro. A turma e' lida na hora
    do cadastro: aluno que muda de turma passa a ver os avisos da turma nova.
 2. **Faltas** — mostra a **frequencia**, e nao o percentual de faltas, porque
-   e' esse o numero que a Secretaria usa. Com `FREQUENCIA_REPROVACAO_DIRETA`
-   (25%) ou menos, o estudante e' reprovado por faltas independentemente das
-   notas; a regra aparece escrita no cartao nos dois casos, e quem esta' nessa
-   situacao recebe um recado destacado pedindo que procure a escola.
+   e' esse o numero que a Secretaria usa. Quatro faixas:
+
+   | frequencia | etiqueta | recado |
+   | --- | --- | --- |
+   | ate 25% | Reprovado por faltas | vermelho, "procure a escola com urgencia" |
+   | ate 35% | Frequencia critica | vermelho, alerta de proximidade do limite |
+   | ate 50% | Frequencia baixa | amarelo |
+   | acima | Sem reprovacao por faltas | verde |
+
+   Só a primeira faixa vem da Secretaria (`FREQUENCIA_REPROVACAO_DIRETA`); as
+   outras duas sao reguas da escola para a familia perceber a queda antes de
+   virar reprovacao, e por isso o texto delas alerta sem afirmar reprovacao.
+   A regra dos 25% aparece escrita nas quatro faixas.
 
    Uma falta e' de **uma aula**, nao de um dia, entao o cartao mostra as duas
    medidas: "235 faltas (47 dias)". Quando o arquivo importado traz o total de

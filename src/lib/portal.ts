@@ -18,9 +18,26 @@ export const MEDIA_APROVACAO = 5;
  */
 export const FREQUENCIA_REPROVACAO_DIRETA = 25;
 
-/** true quando a frequencia ja' reprova o estudante por falta. */
-export function reprovadoPorFaltas(presenca: number | null): boolean {
-  return presenca !== null && presenca <= FREQUENCIA_REPROVACAO_DIRETA;
+/**
+ * Faixas de alerta acima da linha de reprovacao.
+ *
+ * A Secretaria so' estabelece os 25%; estas duas sao reguas da escola, para a
+ * familia perceber a queda antes de virar reprovacao. Por isso o texto separa
+ * as coisas: abaixo de 25% afirma reprovacao, acima disso so' alerta.
+ */
+export const FREQUENCIA_PERIGO = 35;
+export const FREQUENCIA_ATENCAO = 50;
+
+export type NivelDeFrequencia = "reprovado" | "perigo" | "atencao" | "regular";
+
+export function faixaDeFrequencia(
+  presenca: number | null
+): NivelDeFrequencia | null {
+  if (presenca === null) return null;
+  if (presenca <= FREQUENCIA_REPROVACAO_DIRETA) return "reprovado";
+  if (presenca < FREQUENCIA_PERIGO) return "perigo";
+  if (presenca < FREQUENCIA_ATENCAO) return "atencao";
+  return "regular";
 }
 
 /**
