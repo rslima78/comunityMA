@@ -4,9 +4,9 @@ import {
   formatarDias,
   formatarNota,
   formatarDisciplina,
-  LIMITE_FALTAS,
+  FREQUENCIA_MINIMA,
   MEDIA_APROVACAO,
-  percentualDeFaltas,
+  percentualDeFrequencia,
   type AvisoDoEstudante,
   type FrequenciaDoEstudante,
   type NotaDaDisciplina,
@@ -211,8 +211,10 @@ export function SecaoFaltas({
 }: {
   frequencia: FrequenciaDoEstudante | null;
 }) {
-  const percentual = percentualDeFaltas(frequencia);
-  const acimaDoLimite = percentual !== null && percentual >= LIMITE_FALTAS;
+  // A tela fala em frequencia, e nao em faltas: e' o numero que a Secretaria
+  // usa (minimo de 75% para aprovar) e o que a familia ouve na reuniao.
+  const presenca = percentualDeFrequencia(frequencia);
+  const abaixoDoMinimo = presenca !== null && presenca < FREQUENCIA_MINIMA;
   const dias = diasFaltados(frequencia);
   const faltas = frequencia?.total_faltas ?? 0;
 
@@ -225,11 +227,14 @@ export function SecaoFaltas({
           <div className="flex items-end justify-between gap-3">
             <div>
               <p className="text-3xl font-bold tabular-nums">
-                {percentual === null
+                {presenca === null
                   ? "—"
-                  : `${percentual.toFixed(1).replace(".", ",")}%`}
+                  : `${presenca.toFixed(1).replace(".", ",")}%`}
               </p>
-              <p className="text-sm text-[var(--color-text-muted)]">
+              <p className="text-xs uppercase tracking-wide text-[var(--color-text-muted)]">
+                de frequência
+              </p>
+              <p className="mt-1 text-sm text-[var(--color-text-muted)]">
                 {faltas} falta{faltas === 1 ? "" : "s"}
                 {dias !== null ? (
                   <>
@@ -246,38 +251,38 @@ export function SecaoFaltas({
             </div>
             <span
               className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${
-                acimaDoLimite
+                abaixoDoMinimo
                   ? "bg-[var(--color-danger-container)] text-[var(--color-on-danger-container)]"
                   : "bg-[var(--color-success-container)] text-[var(--color-on-success-container)]"
               }`}
             >
-              {acimaDoLimite ? "Acima do limite" : "Dentro do limite"}
+              {abaixoDoMinimo ? "Abaixo do mínimo" : "Frequência adequada"}
             </span>
           </div>
 
-          {percentual !== null ? (
+          {presenca !== null ? (
             <div
               className="mt-3 h-2 w-full overflow-hidden rounded-full bg-[var(--color-surface-high)]"
               role="img"
-              aria-label={`${percentual.toFixed(1)}% de faltas`}
+              aria-label={`${presenca.toFixed(1)}% de frequência`}
             >
               <div
                 className={`h-full rounded-full ${
-                  acimaDoLimite
+                  abaixoDoMinimo
                     ? "bg-[var(--color-danger)]"
                     : "bg-[var(--color-success)]"
                 }`}
-                style={{ width: `${Math.min(percentual, 100)}%` }}
+                style={{ width: `${presenca}%` }}
               />
             </div>
           ) : null}
 
           <p className="mt-3 text-xs text-[var(--color-text-muted)]">
+            É preciso {FREQUENCIA_MINIMA}% de frequência para aprovação.{" "}
             {frequencia.total_aulas !== null && frequencia.total_aulas > 0
-              ? "Percentual sobre o total de aulas dadas."
-              : `Cada 5 faltas equivalem a 1 dia de aula. O percentual é calculado sobre ${DIAS_LETIVOS} dias letivos.`}{" "}
-            A partir de {LIMITE_FALTAS}% o estudante fica em risco de
-            reprovação por frequência. Totais do período {frequencia.periodo}.
+              ? "Calculado sobre o total de aulas dadas."
+              : `Cada 5 faltas equivalem a 1 dia de aula, sobre ${DIAS_LETIVOS} dias letivos.`}{" "}
+            Totais do período {frequencia.periodo}.
           </p>
         </div>
       )}

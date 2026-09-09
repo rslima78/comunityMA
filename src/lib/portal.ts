@@ -9,8 +9,14 @@ import type { Executor } from "./casamento";
 /** Nota minima de aprovacao por unidade. */
 export const MEDIA_APROVACAO = 5;
 
-/** Acima disso a frequencia acende alerta (limite da LDB para reprovacao). */
-export const LIMITE_FALTAS = 25;
+/**
+ * Frequencia minima para aprovacao, em percentual das aulas.
+ *
+ * E' a regra da Secretaria de Educacao: abaixo disso o estudante reprova por
+ * falta. A tela fala em frequencia, e nao em faltas, porque e' esse o numero
+ * que a escola usa e que a familia ouve na reuniao.
+ */
+export const FREQUENCIA_MINIMA = 75;
 
 /**
  * O sistema da escola nao informa o total de aulas dadas, so' o total de
@@ -225,6 +231,19 @@ export function percentualDeFaltas(
 
   const dias = faltas / AULAS_POR_DIA;
   return (dias / DIAS_LETIVOS) * 100;
+}
+
+/**
+ * Percentual de presenca. E' o complemento das faltas, limitado a 0-100 para
+ * o caso de um total de faltas maior que o esperado nao virar numero negativo
+ * na tela.
+ */
+export function percentualDeFrequencia(
+  frequencia: FrequenciaDoEstudante | null
+): number | null {
+  const faltas = percentualDeFaltas(frequencia);
+  if (faltas === null) return null;
+  return Math.min(100, Math.max(0, 100 - faltas));
 }
 
 /** "47" ou "4,6" -- inteiro quando exato, uma casa quando nao. */

@@ -143,18 +143,23 @@ secoes no topo:
 1. **Avisos** (em destaque) — os individuais do estudante mais os da turma
    dele, misturados por data, mais recente primeiro. A turma e' lida na hora
    do cadastro: aluno que muda de turma passa a ver os avisos da turma nova.
-2. **Notas** — um cartao por disciplina, com Unidade 1/2/3, Media Anual,
-   Exame Final e Media Final. Nota abaixo de 5,0 aparece em vermelho.
-3. **Faltas** — percentual com a contagem e uma barra; a partir de 25% acende
-   alerta, que e' o limite da LDB para reprovacao por frequencia.
+2. **Faltas** — mostra a **frequencia**, e nao o percentual de faltas, porque
+   e' esse o numero da Secretaria: abaixo de `FREQUENCIA_MINIMA` (75%) o
+   estudante reprova por falta.
 
    Uma falta e' de **uma aula**, nao de um dia, entao o cartao mostra as duas
    medidas: "235 faltas (47 dias)". Quando o arquivo importado traz o total de
    aulas dadas, o percentual sai dele; quando nao traz -- o caso dos arquivos
-   por turma --, sai de `faltas / 5` dias sobre `70` dias letivos. As duas
+   por turma --, sai de `faltas / 5` dias sobre `70` dias letivos. As
    constantes ficam no inicio de `src/lib/portal.ts`.
+3. **Notas** — um cartao por disciplina, com Unidade 1/2/3, Media Anual,
+   Exame Final e Media Final. Nota abaixo de 5,0 aparece em vermelho.
 4. **Ocorrencias** — tipo, data e descricao, mais recente primeiro, com cor
    por gravidade.
+
+Avisos do proprio sistema -- como o convite para trocar a senha inicial --
+ficam no **fim** da pagina: o recado da escola vem antes do recado do
+aplicativo.
 
 Tudo e' buscado pelo id que veio da sessao assinada; nao existe parametro de
 estudante na URL para alguem trocar.

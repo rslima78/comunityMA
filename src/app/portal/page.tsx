@@ -16,10 +16,12 @@ import {
 
 export const dynamic = "force-dynamic";
 
+// A ordem segue a prioridade para a familia: recado da escola primeiro,
+// depois frequencia, notas e, por ultimo, o historico de ocorrencias.
 const ATALHOS = [
   ["#avisos", "Avisos"],
-  ["#notas", "Notas"],
   ["#faltas", "Faltas"],
+  ["#notas", "Notas"],
   ["#ocorrencias", "Ocorrências"],
 ] as const;
 
@@ -76,6 +78,13 @@ export default async function PaginaPortal() {
       </header>
 
       <main className="flex flex-col gap-6 p-4">
+        <SecaoAvisos avisos={avisos} />
+        <SecaoFaltas frequencia={frequencia} />
+        <SecaoNotas notas={notas} />
+        <SecaoOcorrencias ocorrencias={ocorrencias} />
+
+        {/* Avisos do sistema ficam no fim: o recado da escola vem antes do
+            recado do aplicativo. */}
         {usandoSenhaInicial ? (
           <a
             href="/trocar-senha"
@@ -89,19 +98,14 @@ export default async function PaginaPortal() {
               ›
             </span>
           </a>
-        ) : null}
-
-        <SecaoAvisos avisos={avisos} />
-        <SecaoNotas notas={notas} />
-        <SecaoFaltas frequencia={frequencia} />
-        <SecaoOcorrencias ocorrencias={ocorrencias} />
-
-        <a
-          href="/trocar-senha"
-          className="mt-2 text-center text-sm font-medium text-[var(--color-primary)] underline"
-        >
-          Trocar minha senha
-        </a>
+        ) : (
+          <a
+            href="/trocar-senha"
+            className="mt-2 text-center text-sm font-medium text-[var(--color-primary)] underline"
+          >
+            Trocar minha senha
+          </a>
+        )}
       </main>
     </div>
   );
