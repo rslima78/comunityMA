@@ -165,6 +165,12 @@ secoes no topo:
    constantes ficam no inicio de `src/lib/portal.ts`.
 3. **Notas** — um cartao por disciplina, com Unidade 1/2/3, Media Anual,
    Exame Final e Media Final. Nota abaixo de 5,0 aparece em vermelho.
+
+   As disciplinas sao agrupadas por area -- Linguagens, Humanas, Natureza e
+   Matematica, Diversificadas. O casamento e' por trecho do nome normalizado
+   (`src/lib/areas.ts`), e nao por lista fechada, porque a grade muda entre
+   fundamental, EJA e curso tecnico: "LINGUA PORTUGUESA" e "PORTUGUES" caem no
+   mesmo grupo, e o que nao casa vai para Diversificadas em vez de sumir.
 4. **Ocorrencias** — tipo, data e descricao, mais recente primeiro, com cor
    por gravidade.
 
@@ -172,6 +178,12 @@ secoes no topo:
    conversa no WhatsApp ja' com uma apresentacao escrita ("Sou responsavel
    pelo estudante X da turma Y"), para quem atende nao precisar perguntar de
    quem se trata. A lista fica em `src/lib/contatos.ts`.
+
+Cada secao tem cabecalho colorido com icone. A cor e' identidade do bloco,
+nao significado: quem carrega estado continua sendo o cartao (vermelho de
+reprovacao, amarelo de atencao). As cores ficam em `:root` no `globals.css`,
+fora do `@theme` -- dentro dele o Tailwind as removeria, por serem montadas em
+tempo de execucao e nunca aparecerem escritas numa classe.
 
 Avisos do proprio sistema -- como o convite para trocar a senha inicial --
 ficam no **fim** da pagina: o recado da escola vem antes do recado do

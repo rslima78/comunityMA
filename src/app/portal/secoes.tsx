@@ -1,3 +1,16 @@
+import type { ReactNode } from "react";
+import {
+  IconeAlerta,
+  IconeCalendario,
+  IconeDiversificadas,
+  IconeHumanas,
+  IconeLinguagens,
+  IconeMegafone,
+  IconeNatureza,
+  IconeNotas,
+  IconeWhatsapp,
+} from "@/components/icones";
+import { agruparPorArea, type IdDaArea } from "@/lib/areas";
 import {
   CONTATOS,
   exibirTelefone,
@@ -32,31 +45,54 @@ const somenteData = new Intl.DateTimeFormat("pt-BR", {
   timeZone: "America/Bahia",
 });
 
+type CorDaSecao =
+  | "avisos"
+  | "faltas"
+  | "notas"
+  | "ocorrencias"
+  | "contatos";
+
+/**
+ * Cabecalho colorido de cada secao.
+ *
+ * A cor e' so' identidade do bloco: quem carrega significado continua sendo o
+ * conteudo do cartao (vermelho de reprovacao, amarelo de atencao). Por isso a
+ * faixa e' clara e o cartao segue branco -- se a secao inteira fosse colorida,
+ * o alerta dentro dela perderia forca.
+ *
+ * O nome da variavel CSS e' montado na hora, entao vai em `style` e nao em
+ * classe: o Tailwind so' gera as classes que consegue ver escritas.
+ */
 function Secao({
   id,
   titulo,
   contador,
-  destaque = false,
+  cor,
+  icone,
   children,
 }: {
   id: string;
   titulo: string;
   contador?: string;
-  destaque?: boolean;
-  children: React.ReactNode;
+  cor: CorDaSecao;
+  icone: ReactNode;
+  children: ReactNode;
 }) {
   return (
     <section id={id} className="scroll-mt-4">
-      <div className="mb-2 flex items-baseline justify-between px-1">
-        <h2
-          className={
-            destaque ? "text-lg font-semibold" : "text-base font-semibold"
-          }
-        >
-          {titulo}
-        </h2>
+      <div
+        className="mb-2 flex items-center gap-2.5 rounded-2xl px-3 py-2.5"
+        style={{
+          backgroundColor: `var(--color-secao-${cor}-fundo)`,
+          color: `var(--color-secao-${cor})`,
+        }}
+      >
+        <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[var(--color-surface)]">
+          {icone}
+        </span>
+        <h2 className="text-base font-semibold">{titulo}</h2>
         {contador ? (
-          <span className="text-xs text-[var(--color-text-muted)]">
+          <span className="ml-auto text-xs font-medium opacity-80">
             {contador}
           </span>
         ) : null}
@@ -79,7 +115,8 @@ export function SecaoAvisos({ avisos }: { avisos: AvisoDoEstudante[] }) {
     <Secao
       id="avisos"
       titulo="Avisos"
-      destaque
+      cor="avisos"
+      icone={<IconeMegafone className="size-4.5" />}
       contador={avisos.length > 0 ? `${avisos.length}` : undefined}
     >
       {avisos.length === 0 ? (
@@ -145,13 +182,23 @@ function ValorDaNota({
   );
 }
 
+const ICONE_DA_AREA: Record<IdDaArea, ReactNode> = {
+  linguagens: <IconeLinguagens className="size-4" />,
+  humanas: <IconeHumanas className="size-4" />,
+  natureza: <IconeNatureza className="size-4" />,
+  diversificadas: <IconeDiversificadas className="size-4" />,
+};
+
 export function SecaoNotas({ notas }: { notas: NotaDaDisciplina[] }) {
   const disciplinas = notas.map(formatarDisciplina);
+  const grupos = agruparPorArea(disciplinas);
 
   return (
     <Secao
       id="notas"
       titulo="Notas"
+      cor="notas"
+      icone={<IconeNotas className="size-4.5" />}
       contador={
         disciplinas.length > 0
           ? `${disciplinas.length} disciplina${disciplinas.length === 1 ? "" : "s"}`
@@ -162,46 +209,60 @@ export function SecaoNotas({ notas }: { notas: NotaDaDisciplina[] }) {
         <Vazio>Nenhuma nota lançada até agora.</Vazio>
       ) : (
         <>
-          <ul className="flex flex-col gap-2">
-            {disciplinas.map((d) => (
-              <li
-                key={d.disciplina}
-                className="rounded-2xl border border-[var(--color-outline)] bg-[var(--color-surface)] p-3"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <h3 className="text-sm font-semibold">{d.disciplina}</h3>
-                  <div className="flex shrink-0 items-center gap-1.5">
-                    <span className="text-[10px] uppercase tracking-wide text-[var(--color-text-muted)]">
-                      Média final
-                    </span>
-                    <span
-                      className={`rounded-lg px-2 py-0.5 text-base font-bold tabular-nums ${
-                        d.mediaFinal === null
-                          ? "text-[var(--color-text-muted)]"
-                          : d.mediaFinal < MEDIA_APROVACAO
-                            ? "bg-[var(--color-danger-container)] text-[var(--color-on-danger-container)]"
-                            : "bg-[var(--color-success-container)] text-[var(--color-on-success-container)]"
-                      }`}
-                    >
-                      {formatarNota(d.mediaFinal)}
-                    </span>
-                  </div>
+          <div className="flex flex-col gap-4">
+            {grupos.map((grupo) => (
+              <div key={grupo.id}>
+                <div className="mb-1.5 flex items-center gap-1.5 px-1 text-[var(--color-text-muted)]">
+                  {ICONE_DA_AREA[grupo.id]}
+                  <h3 className="text-xs font-semibold uppercase tracking-wide">
+                    {grupo.nome}
+                  </h3>
+                  <span className="text-xs">· {grupo.disciplinas.length}</span>
                 </div>
 
-                <div className="mt-3 grid grid-cols-5 gap-1 border-t border-[var(--color-outline)] pt-2">
-                  {d.unidades.map((u) => (
-                    <ValorDaNota
-                      key={u.rotulo}
-                      rotulo={u.rotulo}
-                      valor={u.valor}
-                    />
+                <ul className="flex flex-col gap-2">
+                  {grupo.disciplinas.map((d) => (
+                    <li
+                      key={d.disciplina}
+                      className="rounded-2xl border border-[var(--color-outline)] bg-[var(--color-surface)] p-3"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <h4 className="text-sm font-semibold">{d.disciplina}</h4>
+                        <div className="flex shrink-0 items-center gap-1.5">
+                          <span className="text-[10px] uppercase tracking-wide text-[var(--color-text-muted)]">
+                            Média final
+                          </span>
+                          <span
+                            className={`rounded-lg px-2 py-0.5 text-base font-bold tabular-nums ${
+                              d.mediaFinal === null
+                                ? "text-[var(--color-text-muted)]"
+                                : d.mediaFinal < MEDIA_APROVACAO
+                                  ? "bg-[var(--color-danger-container)] text-[var(--color-on-danger-container)]"
+                                  : "bg-[var(--color-success-container)] text-[var(--color-on-success-container)]"
+                            }`}
+                          >
+                            {formatarNota(d.mediaFinal)}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="mt-3 grid grid-cols-5 gap-1 border-t border-[var(--color-outline)] pt-2">
+                        {d.unidades.map((u) => (
+                          <ValorDaNota
+                            key={u.rotulo}
+                            rotulo={u.rotulo}
+                            valor={u.valor}
+                          />
+                        ))}
+                        <ValorDaNota rotulo="Anual" valor={d.mediaAnual} />
+                        <ValorDaNota rotulo="Exame" valor={d.exameFinal} />
+                      </div>
+                    </li>
                   ))}
-                  <ValorDaNota rotulo="Anual" valor={d.mediaAnual} />
-                  <ValorDaNota rotulo="Exame" valor={d.exameFinal} />
-                </div>
-              </li>
+                </ul>
+              </div>
             ))}
-          </ul>
+          </div>
 
           <p className="mt-2 px-1 text-xs text-[var(--color-text-muted)]">
             Notas abaixo de {formatarNota(MEDIA_APROVACAO)} aparecem em
@@ -306,7 +367,12 @@ export function SecaoFaltas({
   const faltas = frequencia?.total_faltas ?? 0;
 
   return (
-    <Secao id="faltas" titulo="Faltas">
+    <Secao
+      id="faltas"
+      titulo="Faltas"
+      cor="faltas"
+      icone={<IconeCalendario className="size-4.5" />}
+    >
       {!frequencia ? (
         <Vazio>Nenhum registro de frequência até agora.</Vazio>
       ) : (
@@ -391,6 +457,8 @@ export function SecaoOcorrencias({
     <Secao
       id="ocorrencias"
       titulo="Ocorrências"
+      cor="ocorrencias"
+      icone={<IconeAlerta className="size-4.5" />}
       contador={ocorrencias.length > 0 ? `${ocorrencias.length}` : undefined}
     >
       {ocorrencias.length === 0 ? (
@@ -435,7 +503,12 @@ export function SecaoContatos({
   estudante: { nome: string; turma: string | null };
 }) {
   return (
-    <Secao id="contatos" titulo="Falar com a escola">
+    <Secao
+      id="contatos"
+      titulo="Falar com a escola"
+      cor="contatos"
+      icone={<IconeWhatsapp className="size-4.5" />}
+    >
       <ul className="flex flex-col gap-2">
         {CONTATOS.map((contato) => (
           <li key={contato.telefone}>
@@ -449,12 +522,7 @@ export function SecaoContatos({
                 aria-hidden
                 className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[var(--color-success-container)]"
               >
-                <svg
-                  viewBox="0 0 24 24"
-                  className="size-5 fill-[var(--color-on-success-container)]"
-                >
-                  <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38a9.9 9.9 0 0 0 4.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2Zm0 18.15h-.01a8.2 8.2 0 0 1-4.19-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.2 8.2 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.25-8.24 2.2 0 4.27.86 5.83 2.42a8.2 8.2 0 0 1 2.41 5.83c0 4.54-3.7 8.23-8.24 8.23Zm4.52-6.16c-.25-.12-1.47-.72-1.69-.81-.23-.08-.39-.12-.56.13-.16.24-.64.8-.78.97-.15.16-.29.18-.53.06-.25-.13-1.05-.39-1.99-1.23-.74-.66-1.23-1.47-1.38-1.72-.14-.25-.01-.38.11-.5.11-.11.25-.29.37-.44.13-.15.17-.25.25-.42.08-.16.04-.31-.02-.43-.06-.12-.56-1.34-.76-1.84-.2-.48-.4-.42-.56-.43h-.47c-.16 0-.43.06-.65.31-.22.25-.85.83-.85 2.03s.87 2.35.99 2.51c.12.16 1.71 2.61 4.15 3.66.58.25 1.03.4 1.39.51.58.19 1.11.16 1.53.1.47-.07 1.47-.6 1.67-1.18.21-.58.21-1.07.15-1.18-.06-.11-.22-.17-.47-.29Z" />
-                </svg>
+                <IconeWhatsapp className="size-5 text-[var(--color-on-success-container)]" />
               </span>
               <span className="min-w-0">
                 <span className="block text-sm font-semibold">

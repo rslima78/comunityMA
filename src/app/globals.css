@@ -31,6 +31,24 @@
   --radius-control: 0.75rem;
 }
 
+:root {
+  /* Cor de cada secao do portal. Nao sao cores semanticas: servem so' para
+     dar identidade visual a cada bloco, e por isso ficam separadas das de
+     estado (sucesso, alerta, erro), que continuam significando o que sempre
+     significaram dentro dos cartoes. */
+  --color-secao-avisos: #1a56c4;
+  --color-secao-avisos-fundo: #e8effd;
+  --color-secao-faltas: #0f766e;
+  --color-secao-faltas-fundo: #dcf2ef;
+  --color-secao-notas: #6b21a8;
+  --color-secao-notas-fundo: #f1e7fb;
+  --color-secao-ocorrencias: #b64509;
+  --color-secao-ocorrencias-fundo: #ffeedd;
+  --color-secao-contatos: #14713a;
+  --color-secao-contatos-fundo: #e2f3e8;
+
+}
+
 body {
   background: var(--color-canvas);
   color: var(--color-text);
