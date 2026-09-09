@@ -168,6 +168,11 @@ secoes no topo:
 4. **Ocorrencias** — tipo, data e descricao, mais recente primeiro, com cor
    por gravidade.
 
+5. **Falar com a escola** — secretaria e direcao, cada um como link de
+   conversa no WhatsApp ja' com uma apresentacao escrita ("Sou responsavel
+   pelo estudante X da turma Y"), para quem atende nao precisar perguntar de
+   quem se trata. A lista fica em `src/lib/contatos.ts`.
+
 Avisos do proprio sistema -- como o convite para trocar a senha inicial --
 ficam no **fim** da pagina: o recado da escola vem antes do recado do
 aplicativo.

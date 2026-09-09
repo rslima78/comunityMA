@@ -9,6 +9,7 @@ import {
 import { sair } from "../login/actions";
 import {
   SecaoAvisos,
+  SecaoContatos,
   SecaoFaltas,
   SecaoNotas,
   SecaoOcorrencias,
@@ -23,6 +24,7 @@ const ATALHOS = [
   ["#faltas", "Faltas"],
   ["#notas", "Notas"],
   ["#ocorrencias", "Ocorrências"],
+  ["#contatos", "Contatos"],
 ] as const;
 
 /**
@@ -82,6 +84,7 @@ export default async function PaginaPortal() {
         <SecaoFaltas frequencia={frequencia} />
         <SecaoNotas notas={notas} />
         <SecaoOcorrencias ocorrencias={ocorrencias} />
+        <SecaoContatos estudante={estudante} />
 
         {/* Avisos do sistema ficam no fim: o recado da escola vem antes do
             recado do aplicativo. */}
