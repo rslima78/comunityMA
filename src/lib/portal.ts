@@ -10,13 +10,18 @@ import type { Executor } from "./casamento";
 export const MEDIA_APROVACAO = 5;
 
 /**
- * Frequencia minima para aprovacao, em percentual das aulas.
+ * Frequencia igual ou inferior a esta reprova o estudante direto por faltas,
+ * independentemente das notas. E' a regra da Secretaria de Educacao.
  *
- * E' a regra da Secretaria de Educacao: abaixo disso o estudante reprova por
- * falta. A tela fala em frequencia, e nao em faltas, porque e' esse o numero
- * que a escola usa e que a familia ouve na reuniao.
+ * A tela fala em frequencia, e nao em percentual de faltas, porque e' esse o
+ * numero que a escola usa e que a familia ouve na reuniao.
  */
-export const FREQUENCIA_MINIMA = 75;
+export const FREQUENCIA_REPROVACAO_DIRETA = 25;
+
+/** true quando a frequencia ja' reprova o estudante por falta. */
+export function reprovadoPorFaltas(presenca: number | null): boolean {
+  return presenca !== null && presenca <= FREQUENCIA_REPROVACAO_DIRETA;
+}
 
 /**
  * O sistema da escola nao informa o total de aulas dadas, so' o total de

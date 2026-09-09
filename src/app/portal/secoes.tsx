@@ -4,9 +4,10 @@ import {
   formatarDias,
   formatarNota,
   formatarDisciplina,
-  FREQUENCIA_MINIMA,
+  FREQUENCIA_REPROVACAO_DIRETA,
   MEDIA_APROVACAO,
   percentualDeFrequencia,
+  reprovadoPorFaltas,
   type AvisoDoEstudante,
   type FrequenciaDoEstudante,
   type NotaDaDisciplina,
@@ -212,9 +213,9 @@ export function SecaoFaltas({
   frequencia: FrequenciaDoEstudante | null;
 }) {
   // A tela fala em frequencia, e nao em faltas: e' o numero que a Secretaria
-  // usa (minimo de 75% para aprovar) e o que a familia ouve na reuniao.
+  // usa e o que a familia ouve na reuniao.
   const presenca = percentualDeFrequencia(frequencia);
-  const abaixoDoMinimo = presenca !== null && presenca < FREQUENCIA_MINIMA;
+  const reprovado = reprovadoPorFaltas(presenca);
   const dias = diasFaltados(frequencia);
   const faltas = frequencia?.total_faltas ?? 0;
 
@@ -250,13 +251,13 @@ export function SecaoFaltas({
               </p>
             </div>
             <span
-              className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${
-                abaixoDoMinimo
+              className={`shrink-0 rounded-full px-2.5 py-1 text-center text-xs font-medium ${
+                reprovado
                   ? "bg-[var(--color-danger-container)] text-[var(--color-on-danger-container)]"
                   : "bg-[var(--color-success-container)] text-[var(--color-on-success-container)]"
               }`}
             >
-              {abaixoDoMinimo ? "Abaixo do mínimo" : "Frequência adequada"}
+              {reprovado ? "Reprovado por faltas" : "Sem reprovação por faltas"}
             </span>
           </div>
 
@@ -268,7 +269,7 @@ export function SecaoFaltas({
             >
               <div
                 className={`h-full rounded-full ${
-                  abaixoDoMinimo
+                  reprovado
                     ? "bg-[var(--color-danger)]"
                     : "bg-[var(--color-success)]"
                 }`}
@@ -277,10 +278,23 @@ export function SecaoFaltas({
             </div>
           ) : null}
 
-          <p className="mt-3 text-xs text-[var(--color-text-muted)]">
-            É preciso {FREQUENCIA_MINIMA}% de frequência para aprovação.{" "}
+          {reprovado ? (
+            <p className="mt-3 rounded-xl bg-[var(--color-danger-container)] px-3 py-2 text-sm font-medium text-[var(--color-on-danger-container)]">
+              A frequência está em {FREQUENCIA_REPROVACAO_DIRETA}% ou menos.
+              Por essa regra da Secretaria de Educação, o estudante é reprovado
+              por faltas mesmo que as notas estejam boas. Procure a escola.
+            </p>
+          ) : (
+            <p className="mt-3 text-sm text-[var(--color-text-muted)]">
+              Com {FREQUENCIA_REPROVACAO_DIRETA}% ou menos de frequência, o
+              estudante é reprovado direto por faltas, independentemente das
+              notas.
+            </p>
+          )}
+
+          <p className="mt-2 text-xs text-[var(--color-text-muted)]">
             {frequencia.total_aulas !== null && frequencia.total_aulas > 0
-              ? "Calculado sobre o total de aulas dadas."
+              ? "Frequência calculada sobre o total de aulas dadas."
               : `Cada 5 faltas equivalem a 1 dia de aula, sobre ${DIAS_LETIVOS} dias letivos.`}{" "}
             Totais do período {frequencia.periodo}.
           </p>
